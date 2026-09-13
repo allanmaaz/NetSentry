@@ -1,6 +1,7 @@
 import { MOCK_GRAPH, MOCK_DETAILS, MOCK_PENDING } from "./mockData";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
+// Live Cloudflare Tunnel HTTPS Endpoint
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://become-safe-utilize-vote.trycloudflare.com/api/v1";
 
 // In-memory working copies for live client-side mutations when offline or without tunnel
 let currentGraph = JSON.parse(JSON.stringify(MOCK_GRAPH));
