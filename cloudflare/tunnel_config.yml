@@ -1,0 +1,17 @@
+# Cloudflare Tunnel Configuration for NetSentry
+# Run with: cloudflared tunnel --config cloudflare/tunnel_config.yml run netsentry-backend
+# Or quick tunnel without domain: cloudflared tunnel --url http://localhost:8000
+
+tunnel: netsentry-backend
+credentials-file: /root/.cloudflared/netsentry-backend.json
+
+ingress:
+  # Route API traffic to local FastAPI
+  - hostname: api.netsentry.live
+    service: http://127.0.0.1:8000
+    originRequest:
+      connectTimeout: 30s
+      noTLSVerify: true
+
+  # Fallback rule
+  - service: http_status:404

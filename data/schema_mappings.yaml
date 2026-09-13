@@ -1,0 +1,89 @@
+# NetSentry Schema Mappings Configuration
+# Translates heterogeneous state police and financial intelligence formats into unified NetSentry Graph ontology
+
+version: "1.0"
+departments:
+  MH_POLICE:
+    source_type: "csv"
+    entity_mapping:
+      accused_name:
+        canonical: "Person.name"
+        transform: "clean_name"
+      fir_number:
+        canonical: "FIR.id"
+        prefix: "MH-"
+      police_station:
+        canonical: "FIR.station"
+      offense_type:
+        canonical: "FIR.crime_type"
+      section_ipc:
+        canonical: "FIR.sections"
+        transform: "split_comma"
+      date_of_fir:
+        canonical: "FIR.incident_date"
+      seized_phone:
+        canonical: "Phone.number"
+        transform: "normalize_phone"
+        relationship: "OWNS_PHONE"
+      vehicle_reg_no:
+        canonical: "Vehicle.registration"
+        transform: "normalize_plate"
+        relationship: "OWNS_VEHICLE"
+      location_district:
+        canonical: "Location.city"
+        state: "Maharashtra"
+
+  KA_POLICE:
+    source_type: "json"
+    entity_mapping:
+      suspect_details:
+        canonical: "Person.name"
+        transform: "clean_name"
+      crime_no:
+        canonical: "FIR.id"
+        prefix: "KA-"
+      ps_jurisdiction:
+        canonical: "FIR.station"
+      major_head:
+        canonical: "FIR.crime_type"
+      ipc_sections_invoked:
+        canonical: "FIR.sections"
+        transform: "split_comma"
+      reported_datetime:
+        canonical: "FIR.incident_date"
+      contact_number:
+        canonical: "Phone.number"
+        transform: "normalize_phone"
+        relationship: "OWNS_PHONE"
+      associated_vehicle:
+        canonical: "Vehicle.registration"
+        transform: "normalize_plate"
+        relationship: "OWNS_VEHICLE"
+      district:
+        canonical: "Location.city"
+        state: "Karnataka"
+
+  FINANCIAL_INTEL:
+    source_type: "csv"
+    entity_mapping:
+      transaction_id:
+        canonical: "Transaction.id"
+      sender_name:
+        canonical: "Person.name"
+        transform: "clean_name"
+      sender_account:
+        canonical: "BankAccount.account_number"
+        relationship: "BENEFICIARY_OF"
+      receiver_name:
+        canonical: "Person.name"
+        transform: "clean_name"
+      receiver_account:
+        canonical: "BankAccount.account_number"
+        relationship: "RECIPIENT_OF"
+      amount_inr:
+        canonical: "Transaction.amount"
+        transform: "to_float"
+      flag_reason:
+        canonical: "Transaction.flag"
+      timestamp:
+        canonical: "Transaction.date"

@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NetSentry — Criminal Network Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F0F4F8;
+    --surface: #FFFFFF;
+    --border: #E2E8F0;
+    --border-light: #F1F5F9;
+    --navy: #0F172A;
+    --navy-light: #1E293B;
+    --gray: #64748B;
+    --gray-light: #94A3B8;
+    --critical: #EF4444;
+    --critical-bg: #FEF2F2;
+    --high: #F59E0B;
+    --high-bg: #FFFBEB;
+    --medium: #06B6D4;
+    --medium-bg: #ECFEFF;
+    --low: #10B981;
+    --low-bg: #ECFDF5;
+    --purple: #8B5CF6;
+    --purple-bg: #F5F3FF;
+    --teal: #0EA5E9;
+    --sun-color: #F97316;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.04);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--navy);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TOPBAR ── */
+  #topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 18px; height: 18px; }
+  .icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .icon svg { display: block; }
+
+  nav {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  nav button {
+    background: none;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  nav button:hover { background: var(--bg); color: var(--navy); }
+  nav button.active {
+    background: var(--navy);
+    color: #fff;
+  }
+
+  #search-wrap {
+    flex: 1;
+    max-width: 380px;
+    position: relative;
+  }
+  #search-wrap input {
+    width: 100%;
+    padding: 8px 14px 8px 36px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--navy);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #search-wrap input:focus { border-color: var(--teal); background: #fff; }
+  #search-wrap .search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--gray-light); font-size: 14px;
+  }
+
+  .filter-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .chip:hover { opacity: 0.8; }
+  .chip-all { background: var(--navy); color: #fff; }
+  .chip-crit { background: var(--critical-bg); color: var(--critical); border-color: #FECACA; }
+  .chip-high { background: var(--high-bg); color: var(--high); border-color: #FDE68A; }
+  .chip-med  { background: var(--medium-bg); color: var(--medium); border-color: #A5F3FC; }
+  .chip-mh   { background: var(--purple-bg); color: var(--purple); border-color: #DDD6FE; }
+  .chip-ka   { background: var(--purple-bg); color: var(--purple); border-color: #DDD6FE; }
+  .chip-fin  { background: #F0FDF4; color: var(--low); border-color: #A7F3D0; }
+
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+  /* ── MAIN LAYOUT ── */
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── GRAPH CANVAS ── */
+  #graph-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(14,165,233,0.04) 0%, transparent 70%),
+      var(--bg);
+  }
+
+  /* dot grid */
+  #graph-area::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, #CBD5E1 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  #graph-svg { width: 100%; height: 100%; }
+
+  /* graph controls */
+  .graph-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .graph-controls button {
+    width: 36px; height: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .graph-controls button:hover { box-shadow: var(--shadow-md); }
+
+  /* graph legend */
+  .legend {
+    position: absolute;
+    top: 16px; left: 16px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+    font-size: 11px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .legend-title { font-weight: 700; color: var(--navy); font-size: 11px; margin-bottom: 2px; }
+  .legend-row { display: flex; align-items: center; gap: 7px; color: var(--gray); }
+  .legend-node { border-radius: 50%; flex-shrink: 0; }
+
+  /* ── RIGHT PANEL ── */
+  #inspector {
+    width: 340px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.04);
+  }
+
+  .inspector-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border-light);
+    background: linear-gradient(135deg, #FAFBFF 0%, #F8F0FF 100%);
+  }
+
+  .entity-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--teal);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .entity-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  .risk-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .risk-badge.critical { background: var(--critical-bg); color: var(--critical); border: 1.5px solid #FECACA; }
+  .risk-badge.high { background: var(--high-bg); color: var(--high); border: 1.5px solid #FDE68A; }
+  .risk-badge.medium { background: var(--medium-bg); color: var(--medium); border: 1.5px solid #A5F3FC; }
+
+  /* Donut gauge */
+  .gauge-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+  .gauge-wrap svg { width: 72px; height: 72px; }
+  .gauge-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center; line-height: 1;
+  }
+  .gauge-num { font-size: 18px; font-weight: 800; color: var(--critical); }
+  .gauge-den { font-size: 9px; color: var(--gray-light); font-weight: 500; }
+
+  .inspector-section {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--gray-light);
+    margin-bottom: 10px;
+  }
+
+  .metric-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .metric-tile {
+    flex: 1;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .metric-val { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .metric-lbl { font-size: 9px; color: var(--gray-light); font-weight: 500; margin-top: 1px; }
+
+  .jur-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .jur-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--purple-bg);
+    color: var(--purple);
+    border: 1px solid #DDD6FE;
+  }
+
+  .xai-box {
+    background: linear-gradient(135deg, #F8FAFF 0%, #F5F0FF 100%);
+    border: 1px solid #E8E0FF;
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--navy-light);
+    position: relative;
+  }
+  .xai-box::before {
+    content: '"';
+    font-size: 40px;
+    color: var(--purple);
+    opacity: 0.2;
+    position: absolute;
+    top: 4px; left: 8px;
+    font-family: Georgia, serif;
+    line-height: 1;
+  }
+  .xai-box p { padding-left: 12px; }
+
+  .alias-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .alias-chip {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--bg);
+    color: var(--navy-light);
+    border: 1px solid var(--border);
+  }
+
+  .fir-list { display: flex; flex-direction: column; gap: 8px; }
+  .fir-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .fir-id { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--navy); font-weight: 500; }
+  .fir-state { font-size: 10px; color: var(--gray); }
+  .fir-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .export-btn {
+    margin: 16px 20px;
+    padding: 12px;
+    background: linear-gradient(135deg, #0F172A 0%, #312E81 100%);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    width: calc(100% - 40px);
+    letter-spacing: 0.2px;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .export-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* ── BOTTOM HITL DOCK ── */
+  #hitl-dock {
+    height: 90px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+  }
+
+  .hitl-label {
+    flex-shrink: 0;
+    min-width: 180px;
+  }
+  .hitl-label h4 { font-size: 12px; font-weight: 700; color: var(--navy); }
+  .hitl-label p { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .pending-badge {
+    display: inline-block;
+    background: var(--high-bg);
+    color: var(--high);
+    border: 1px solid #FDE68A;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .hitl-cards { display: flex; gap: 12px; flex: 1; overflow-x: auto; }
+
+  .hitl-card {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+    min-width: 420px;
+  }
+  .hitl-card:hover { border-color: var(--high); }
+
+  .hitl-suspect { font-size: 12px; }
+  .hitl-name { font-weight: 700; color: var(--navy); font-size: 13px; }
+  .hitl-meta { color: var(--gray); font-size: 10px; margin-top: 1px; }
+
+  .hitl-vs {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gray-light);
+    flex-shrink: 0;
+  }
+
+  .hitl-score {
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .hitl-score-num { font-size: 18px; font-weight: 800; color: var(--high); }
+  .hitl-score-bar {
+    width: 60px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .hitl-score-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--high), var(--critical));
+    border-radius: 2px;
+  }
+
+  .hitl-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-merge {
+    padding: 6px 12px;
+    background: #ECFDF5;
+    color: var(--low);
+    border: 1.5px solid #A7F3D0;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-merge:hover { background: var(--low); color: white; }
+  .btn-reject {
+    padding: 6px 12px;
+    background: var(--critical-bg);
+    color: var(--critical);
+    border: 1.5px solid #FECACA;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-reject:hover { background: var(--critical); color: white; }
+
+  /* tooltip */
+  #tooltip {
+    position: fixed;
+    background: var(--navy);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 999;
+    max-width: 200px;
+    box-shadow: var(--shadow-lg);
+  }
+  #tooltip.show { opacity: 1; }
+  #tooltip .tip-name { font-weight: 700; margin-bottom: 2px; }
+  #tooltip .tip-risk { font-size: 11px; opacity: 0.8; }
+
+  /* pulse animation for sun */
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  .pulse-ring { animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+
+  /* spinner for processing */
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/>
+        <line x1="12" y1="2" x2="12" y2="22"/>
+        <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+        <line x1="2" y1="15.5" x2="22" y2="15.5"/>
+      </svg>
+    </div>
+    NetSentry
+  </div>
+
+  <nav>
+    <button class="active">Network Graph</button>
+    <button>Data Ingestion</button>
+    <button>Analytics</button>
+    <button>HITL Review</button>
+    <button>Audit Log</button>
+  </nav>
+
+  <div id="search-wrap">
+    <span class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </span>
+    <input type="text" placeholder="Search suspect, phone, FIR, vehicle..."/>
+  </div>
+
+  <div class="filter-group">
+    <span class="chip chip-all">All</span>
+    <span class="chip chip-crit"><span class="dot" style="background:var(--critical)"></span>CRITICAL 12</span>
+    <span class="chip chip-high"><span class="dot" style="background:var(--high)"></span>HIGH 34</span>
+    <span class="chip chip-med"><span class="dot" style="background:var(--medium)"></span>MEDIUM 19</span>
+  </div>
+  <!-- SVG icon helper defs -->
+  <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </symbol>
+    <symbol id="icon-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.14Z"/>
+      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.14Z"/>
+    </symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </symbol>
+    <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </symbol>
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+    </symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </symbol>
+    <symbol id="icon-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </symbol>
+  </svg>
+
+  <div class="filter-group">
+    <span class="chip chip-mh">MH</span>
+    <span class="chip chip-ka">KA</span>
+    <span class="chip chip-fin">FIN</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- GRAPH -->
+  <div id="graph-area">
+    <svg id="graph-svg"></svg>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-title">NODE LEGEND</div>
+      <div class="legend-row"><div class="legend-node" style="width:18px;height:18px;background:#F97316;border-radius:50%;box-shadow:0 0 8px #F97316"></div> Kingpin (Sun)</div>
+      <div class="legend-row"><div class="legend-node" style="width:13px;height:13px;background:var(--critical);border-radius:50%"></div> Critical Risk</div>
+      <div class="legend-row"><div class="legend-node" style="width:11px;height:11px;background:var(--high);border-radius:50%"></div> High Risk</div>
+      <div class="legend-row"><div class="legend-node" style="width:9px;height:9px;background:var(--medium);border-radius:50%"></div> Medium Risk</div>
+      <div class="legend-row"><div class="legend-node" style="width:8px;height:8px;background:var(--low);border-radius:50%"></div> Low Risk</div>
+      <div class="legend-row"><div class="legend-node" style="width:11px;height:11px;background:transparent;border-radius:50%;border:2px solid var(--purple)"></div> Cross-Jurisdiction</div>
+      <div style="margin-top:4px;border-top:1px solid var(--border);padding-top:6px;">
+        <div class="legend-row"><div style="width:20px;height:2px;background:#93C5FD;border-radius:1px"></div> Phone Calls</div>
+        <div class="legend-row"><div style="width:20px;height:2px;background:#6EE7B7;border-radius:1px"></div> Financial Link</div>
+      </div>
+    </div>
+
+    <div class="graph-controls">
+      <button title="Zoom In">＋</button>
+      <button title="Zoom Out">－</button>
+      <button title="Reset" style="font-size:14px">⟳</button>
+    </div>
+  </div>
+
+  <!-- INSPECTOR -->
+  <div id="inspector">
+    <div class="inspector-header">
+      <div class="entity-id">PER_A4F2C8E1 · Neo4j Node #1</div>
+      <div class="entity-name">Mohammed Aslam</div>
+      <div class="risk-row">
+        <span class="risk-badge critical">● CRITICAL RISK</span>
+        <div class="gauge-wrap">
+          <svg viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="28" fill="none" stroke="#FEE2E2" stroke-width="7"/>
+            <circle cx="36" cy="36" r="28" fill="none" stroke="#EF4444" stroke-width="7"
+              stroke-dasharray="175.9" stroke-dashoffset="14" stroke-linecap="round"
+              transform="rotate(-90 36 36)"/>
+          </svg>
+          <div class="gauge-label">
+            <div class="gauge-num">92</div>
+            <div class="gauge-den">/100</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="section-title">Graph Metrics</div>
+      <div class="metric-row">
+        <div class="metric-tile">
+          <div class="metric-val" style="color:var(--critical)">97th</div>
+          <div class="metric-lbl">Betweenness %ile</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val">28</div>
+          <div class="metric-lbl">Degree</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-val" style="color:var(--purple)">2</div>
+          <div class="metric-lbl">Jurisdictions</div>
+        </div>
+      </div>
+      <div class="jur-pills">
+        <div class="jur-pill">
+          <svg width="10" height="10"><use href="#icon-lock"/></svg>
+          MH_POLICE
+        </div>
+        <div class="jur-pill">
+          <svg width="10" height="10"><use href="#icon-lock"/></svg>
+          KA_POLICE
+        </div>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="section-title" style="display:flex;align-items:center;gap:5px;">
+        <svg width="11" height="11"><use href="#icon-brain" stroke="#94A3B8"/></svg>
+        AI Explanation
+      </div>
+      <div class="xai-box">
+        <p>Acts as critical communication bridge (Top 1% Betweenness Centrality) connecting <strong>Mumbai arms network</strong> and <strong>Bangalore hawala cluster</strong>. Maintains 4 aliases across 2 police jurisdictions with 94% identity resolution confidence.</p>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="section-title">Resolved Aliases</div>
+      <div class="alias-chips">
+        <span class="alias-chip">Mohd. Aslam</span>
+        <span class="alias-chip">Aslam Bhai</span>
+        <span class="alias-chip">अस्लम</span>
+        <span class="alias-chip">MD Aslam</span>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="section-title">Associated FIRs</div>
+      <div class="fir-list">
+        <div class="fir-row">
+          <div>
+            <div class="fir-id">FIR_MH_2024_402</div>
+            <div class="fir-state">Maharashtra · Arms Act</div>
+          </div>
+          <div class="fir-dot" style="background:var(--critical)"></div>
+        </div>
+        <div class="fir-row">
+          <div>
+            <div class="fir-id">FIR_KA_2024_099</div>
+            <div class="fir-state">Karnataka · Hawala</div>
+          </div>
+          <div class="fir-dot" style="background:var(--critical)"></div>
+        </div>
+        <div class="fir-row">
+          <div>
+            <div class="fir-id">FIR_MH_2023_187</div>
+            <div class="fir-state">Maharashtra · Extortion</div>
+          </div>
+          <div class="fir-dot" style="background:var(--high)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="section-title">Identifiers</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--gray)">Phone</span>
+          <span style="color:var(--navy);font-weight:600">+91-9876-5432-10</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--gray)">Vehicle</span>
+          <span style="color:var(--navy);font-weight:600">MH-04-AB-1234</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--gray)">Bank A/C</span>
+          <span style="color:var(--navy);font-weight:600">HDFC_992019XXXX</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="export-btn">
+    <svg width="15" height="15"><use href="#icon-file" stroke="white"/></svg>
+    Export Evidence Dossier
+    <svg width="15" height="15"><use href="#icon-arrow-right" stroke="white"/></svg>
+  </button>
+  </div>
+</div>
+
+<!-- HITL DOCK -->
+<div id="hitl-dock">
+  <div class="hitl-label">
+    <h4>HITL Review Queue</h4>
+    <p>Identity Merge Candidates</p>
+    <span class="pending-badge">● 3 PENDING</span>
+  </div>
+
+  <div class="hitl-cards">
+    <!-- Card 1 -->
+    <div class="hitl-card">
+      <div class="hitl-suspect">
+        <div class="hitl-name">Mohd. Iqbal</div>
+        <div class="hitl-meta">MH_POLICE · FIR_MH_2024_391</div>
+      </div>
+      <div class="hitl-vs">vs</div>
+      <div class="hitl-suspect">
+        <div class="hitl-name">Iqbal Painter</div>
+        <div class="hitl-meta">KA_POLICE · FIR_KA_2024_041</div>
+      </div>
+      <div class="hitl-score">
+        <div class="hitl-score-num">74%</div>
+        <div class="hitl-score-bar"><div class="hitl-score-fill" style="width:74%"></div></div>
+      </div>
+      <div class="hitl-actions">
+        <button class="btn-merge" style="display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12"><use href="#icon-check"/></svg> Merge
+        </button>
+        <button class="btn-reject" style="display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12"><use href="#icon-x"/></svg> Reject
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="hitl-card">
+      <div class="hitl-suspect">
+        <div class="hitl-name">Raza Khan</div>
+        <div class="hitl-meta">MH_POLICE · FIR_MH_2024_445</div>
+      </div>
+      <div class="hitl-vs">vs</div>
+      <div class="hitl-suspect">
+        <div class="hitl-name">Raza Ahmed Khan</div>
+        <div class="hitl-meta">FIN_INTEL · TXN_2024_8823</div>
+      </div>
+      <div class="hitl-score">
+        <div class="hitl-score-num">68%</div>
+        <div class="hitl-score-bar"><div class="hitl-score-fill" style="width:68%"></div></div>
+      </div>
+      <div class="hitl-actions">
+        <button class="btn-merge" style="display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12"><use href="#icon-check"/></svg> Merge
+        </button>
+        <button class="btn-reject" style="display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12"><use href="#icon-x"/></svg> Reject
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="hitl-card">
+      <div class="hitl-suspect">
+        <div class="hitl-name">Vikram Shetty</div>
+        <div class="hitl-meta">KA_POLICE · FIR_KA_2024_055</div>
+      </div>
+      <div class="hitl-vs">vs</div>
+      <div class="hitl-suspect">
+        <div class="hitl-name">V. Shetty</div>
+        <div class="hitl-meta">FIN_INTEL · TXN_2024_9120</div>
+      </div>
+      <div class="hitl-score">
+        <div class="hitl-score-num">61%</div>
+        <div class="hitl-score-bar"><div class="hitl-score-fill" style="width:61%;background:linear-gradient(90deg,#F59E0B,#F59E0B)"></div></div>
+      </div>
+      <div class="hitl-actions">
+        <button class="btn-merge" style="display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12"><use href="#icon-check"/></svg> Merge
+        </button>
+        <button class="btn-reject" style="display:flex;align-items:center;gap:4px;">
+          <svg width="12" height="12"><use href="#icon-x"/></svg> Reject
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div id="tooltip">
+  <div class="tip-name" id="tip-name"></div>
+  <div class="tip-risk" id="tip-risk"></div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const nodes = [
+  // Sun — kingpin
+  { id: "aslam",    name: "Mohammed Aslam",  risk: "critical", size: 34, orbit: 0, crossJur: true,  dept: "MH+KA" },
+  // Inner orbit — CRITICAL
+  { id: "shoaib",   name: "Shoaib Shooter",  risk: "critical", size: 18, orbit: 1, crossJur: false, dept: "MH" },
+  { id: "hawala1",  name: "Hawala Broker",   risk: "critical", size: 17, orbit: 1, crossJur: true,  dept: "KA+FIN" },
+  { id: "raza",     name: "Raza Khan",       risk: "critical", size: 16, orbit: 1, crossJur: false, dept: "MH" },
+  // Middle orbit — HIGH
+  { id: "kiran",    name: "Kiran BLR",       risk: "high",     size: 13, orbit: 2, crossJur: true,  dept: "KA+FIN" },
+  { id: "mule1",    name: "Mule Acc. 1",     risk: "high",     size: 12, orbit: 2, crossJur: false, dept: "FIN" },
+  { id: "sim1",     name: "SIM Card Hub",    risk: "high",     size: 11, orbit: 2, crossJur: false, dept: "MH" },
+  { id: "aslamka",  name: "Aslam KA",        risk: "high",     size: 12, orbit: 2, crossJur: true,  dept: "KA" },
+  { id: "mule2",    name: "Mule Acc. 2",     risk: "high",     size: 11, orbit: 2, crossJur: false, dept: "FIN" },
+  // Outer orbit — MEDIUM
+  { id: "c1",       name: "Contact A",       risk: "medium",   size: 9,  orbit: 3, crossJur: false, dept: "MH" },
+  { id: "c2",       name: "Phone Node",      risk: "medium",   size: 8,  orbit: 3, crossJur: false, dept: "KA" },
+  { id: "c3",       name: "Border Point",    risk: "medium",   size: 9,  orbit: 3, crossJur: true,  dept: "MH+KA" },
+  { id: "c4",       name: "Contact D",       risk: "medium",   size: 8,  orbit: 3, crossJur: false, dept: "FIN" },
+  { id: "c5",       name: "Pickup Agent",    risk: "medium",   size: 9,  orbit: 3, crossJur: false, dept: "KA" },
+  // Outer orbit — LOW
+  { id: "l1",       name: "Benign Cit. 1",   risk: "low",      size: 7,  orbit: 4, crossJur: false, dept: "MH" },
+  { id: "l2",       name: "Benign Cit. 2",   risk: "low",      size: 6,  orbit: 4, crossJur: false, dept: "KA" },
+  { id: "l3",       name: "Benign Cit. 3",   risk: "low",      size: 6,  orbit: 4, crossJur: false, dept: "MH" },
+  { id: "l4",       name: "Benign Cit. 4",   risk: "low",      size: 7,  orbit: 4, crossJur: false, dept: "FIN" },
+];
+
+const links = [
+  // Sun connections
+  { source: "aslam", target: "shoaib",  type: "call",     label: "42 calls" },
+  { source: "aslam", target: "hawala1", type: "financial", label: "₹45L" },
+  { source: "aslam", target: "raza",    type: "call",      label: "38 calls" },
+  { source: "aslam", target: "kiran",   type: "financial", label: "₹12L" },
+  { source: "aslam", target: "sim1",    type: "call",      label: "SIM-shared" },
+  { source: "aslam", target: "aslamka", type: "call",      label: "27 calls" },
+  // Inner to middle
+  { source: "shoaib",  target: "c1",    type: "call",      label: "14 calls" },
+  { source: "shoaib",  target: "l1",    type: "call",      label: "6 calls" },
+  { source: "hawala1", target: "mule1", type: "financial", label: "₹8L" },
+  { source: "hawala1", target: "mule2", type: "financial", label: "₹5L" },
+  { source: "hawala1", target: "kiran", type: "financial", label: "₹18L" },
+  { source: "raza",    target: "c3",    type: "call",      label: "9 calls" },
+  { source: "raza",    target: "c5",    type: "call",      label: "11 calls" },
+  // Middle to outer
+  { source: "kiran",   target: "c2",   type: "call",      label: "7 calls" },
+  { source: "kiran",   target: "c4",   type: "financial", label: "₹3L" },
+  { source: "mule1",   target: "l4",   type: "financial", label: "₹1.2L" },
+  { source: "sim1",    target: "c1",   type: "call",      label: "3 calls" },
+  { source: "aslamka", target: "c3",   type: "call",      label: "5 calls" },
+  { source: "mule2",   target: "l2",   type: "financial", label: "₹2L" },
+  { source: "c5",      target: "l3",   type: "call",      label: "2 calls" },
+];
+
+// ── COLORS ────────────────────────────────────────────────────────────────────
+const riskColor = {
+  critical: "#EF4444",
+  high:     "#F59E0B",
+  medium:   "#06B6D4",
+  low:      "#10B981",
+  sun:      "#F97316"
+};
+
+const linkColor = {
+  call:      "#93C5FD",
+  financial: "#6EE7B7"
+};
+
+// ── DRAW ──────────────────────────────────────────────────────────────────────
+function draw() {
+  const svg = d3.select("#graph-svg");
+  const W = document.getElementById("graph-area").clientWidth;
+  const H = document.getElementById("graph-area").clientHeight;
+  const cx = W / 2, cy = H / 2;
+
+  svg.attr("width", W).attr("height", H);
+  svg.selectAll("*").remove();
+
+  const g = svg.append("g");
+
+  // Zoom
+  const zoom = d3.zoom().scaleExtent([0.3, 4])
+    .on("zoom", e => g.attr("transform", e.transform));
+  svg.call(zoom);
+  document.querySelectorAll(".graph-controls button").forEach((btn, i) => {
+    btn.onclick = () => {
+      if (i === 0) svg.transition().call(zoom.scaleBy, 1.4);
+      else if (i === 1) svg.transition().call(zoom.scaleBy, 0.7);
+      else svg.transition().call(zoom.transform, d3.zoomIdentity);
+    };
+  });
+
+  // Orbital radii
+  const orbits = [0, 90, 160, 230, 295];
+
+  // Draw orbital rings
+  const orbitGroup = g.append("g").attr("class", "orbits");
+  [1,2,3,4].forEach(o => {
+    orbitGroup.append("ellipse")
+      .attr("cx", cx).attr("cy", cy)
+      .attr("rx", orbits[o]).attr("ry", orbits[o] * 0.72)
+      .attr("fill", "none")
+      .attr("stroke", "#CBD5E1")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "5,6")
+      .attr("opacity", 0.6);
+  });
+
+  // Position nodes on orbits
+  const nodesByOrbit = { 0: [], 1: [], 2: [], 3: [], 4: [] };
+  nodes.forEach(n => nodesByOrbit[n.orbit].push(n));
+
+  nodes.forEach(n => {
+    if (n.orbit === 0) { n.x = cx; n.y = cy; return; }
+    const siblings = nodesByOrbit[n.orbit];
+    const idx = siblings.indexOf(n);
+    const total = siblings.length;
+    const angleOffset = n.orbit === 1 ? -20 : n.orbit === 2 ? 10 : n.orbit === 3 ? -5 : 20;
+    const angle = (idx / total) * 2 * Math.PI + (angleOffset * Math.PI / 180);
+    const rx = orbits[n.orbit];
+    const ry = orbits[n.orbit] * 0.72;
+    n.x = cx + rx * Math.cos(angle);
+    n.y = cy + ry * Math.sin(angle);
+  });
+
+  // Draw links
+  const linkGroup = g.append("g").attr("class", "links");
+  links.forEach(lk => {
+    const s = nodes.find(n => n.id === lk.source);
+    const t = nodes.find(n => n.id === lk.target);
+    if (!s || !t) return;
+
+    const dx = t.x - s.x, dy = t.y - s.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const mx = (s.x + t.x)/2 - dy * 0.15;
+    const my = (s.y + t.y)/2 + dx * 0.15;
+
+    linkGroup.append("path")
+      .attr("d", `M${s.x},${s.y} Q${mx},${my} ${t.x},${t.y}`)
+      .attr("fill", "none")
+      .attr("stroke", linkColor[lk.type])
+      .attr("stroke-width", lk.type === "financial" ? 2 : 1.5)
+      .attr("opacity", 0.7)
+      .attr("stroke-dasharray", lk.type === "financial" ? "4,3" : "none");
+  });
+
+  // Draw nodes
+  const nodeGroup = g.append("g").attr("class", "nodes");
+  const tip = document.getElementById("tooltip");
+
+  nodes.forEach(n => {
+    const col = n.orbit === 0 ? riskColor.sun : riskColor[n.risk];
+    const ng = nodeGroup.append("g")
+      .attr("transform", `translate(${n.x},${n.y})`)
+      .style("cursor", "pointer");
+
+    // Sun pulse rings
+    if (n.orbit === 0) {
+      [1, 1.6, 2.2].forEach((scale, i) => {
+        ng.append("circle")
+          .attr("r", n.size * scale)
+          .attr("fill", "none")
+          .attr("stroke", col)
+          .attr("stroke-width", 1)
+          .attr("opacity", 0.15 - i*0.04);
+      });
+    }
+
+    // Cross-jurisdiction halo
+    if (n.crossJur && n.orbit > 0) {
+      ng.append("circle")
+        .attr("r", n.size + 5)
+        .attr("fill", "none")
+        .attr("stroke", "#8B5CF6")
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", "4,3")
+        .attr("opacity", 0.8);
+    }
+
+    // Shadow/glow
+    ng.append("circle")
+      .attr("r", n.size + 2)
+      .attr("fill", col)
+      .attr("opacity", 0.12);
+
+    // Main node
+    ng.append("circle")
+      .attr("r", n.size)
+      .attr("fill", col)
+      .attr("stroke", "#FFFFFF")
+      .attr("stroke-width", n.orbit === 0 ? 3 : 2)
+      .attr("opacity", n.orbit === 0 ? 1 : 0.9);
+
+    // Inner highlight
+    ng.append("circle")
+      .attr("r", n.size * 0.45)
+      .attr("cx", -n.size * 0.2)
+      .attr("cy", -n.size * 0.2)
+      .attr("fill", "rgba(255,255,255,0.35)");
+
+    // Label
+    if (n.orbit <= 2) {
+      ng.append("text")
+        .text(n.orbit === 0 ? n.name : n.name.length > 13 ? n.name.slice(0,11)+"…" : n.name)
+        .attr("text-anchor", "middle")
+        .attr("y", n.size + 14)
+        .attr("font-family", "Inter, sans-serif")
+        .attr("font-size", n.orbit === 0 ? 12 : 10)
+        .attr("font-weight", n.orbit === 0 ? 700 : 500)
+        .attr("fill", "#0F172A");
+    }
+
+    // Tooltip
+    ng.on("mousemove", function(event) {
+      document.getElementById("tip-name").textContent = n.name;
+      document.getElementById("tip-risk").textContent =
+        (n.orbit === 0 ? "KINGPIN · " : "") +
+        n.risk.toUpperCase() + " · " + n.dept;
+      tip.style.left = (event.clientX + 12) + "px";
+      tip.style.top  = (event.clientY - 10) + "px";
+      tip.classList.add("show");
+    })
+    .on("mouseleave", () => tip.classList.remove("show"));
+  });
+}
+
+draw();
+window.addEventListener("resize", draw);
+
+// HITL buttons
+document.querySelectorAll(".btn-merge").forEach(btn => {
+  btn.addEventListener("click", function() {
+    const card = this.closest(".hitl-card");
+    card.style.opacity = "0.4";
+    card.style.pointerEvents = "none";
+    this.innerHTML = '<svg width="12" height="12"><use href="#icon-check" stroke="currentColor"/></svg> Merged!';
+  });
+});
+document.querySelectorAll(".btn-reject").forEach(btn => {
+  btn.addEventListener("click", function() {
+    const card = this.closest(".hitl-card");
+    card.style.opacity = "0.4";
+    card.style.pointerEvents = "none";
+    this.innerHTML = '<svg width="12" height="12"><use href="#icon-x" stroke="currentColor"/></svg> Rejected';
+  });
+});
+
+// Nav tabs
+document.querySelectorAll("nav button").forEach(btn => {
+  btn.addEventListener("click", function() {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+    this.classList.add("active");
+  });
+});
+
+// Export button
+document.querySelector(".export-btn").addEventListener("click", () => {
+  alert("Evidence Dossier — Mohammed Aslam\nExporting PDF...\n\n[OK] Risk Score: 92/100 CRITICAL\n[OK] Aliases: 4 resolved\n[OK] FIRs: 3 across 2 states\n[OK] XAI Justification included\n[OK] Audit trail logged");
+});
+</script>
+</body>
+</html>

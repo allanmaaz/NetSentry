@@ -1,0 +1,151 @@
+fir_number,police_station,accused_name,offense_type,section_ipc,date_of_fir,seized_phone,vehicle_reg_no,location_district
+MH-2023-MRA-0142,MRA Marg PS,Mohd. Aslam,Extortion & Organised Syndicate,"384, 387, 120B IPC",2023-04-14 11:20:00,+91-9876543210,MH-12-DE-1001,Mumbai
+MH-2023-BND-0389,Bandra PS,Mohammed Aslam Shaikh,Arms Act & Syndicate Financing,"307 IPC, 3/25 Arms Act",2023-08-22 19:45:00,+91-9876543210,MH-12-DE-1001,Mumbai
+MH-2023-PUN-0711,Shivajinagar PS,Vikram Jadhav,Armed Extortion & Assault,"384, 324 IPC",2023-09-10 14:10:00,+91-9822019283,MH-12-AB-4491,Pune
+MH-2023-MUM-0902,Mumbra PS,Mohd. Iqbal,Forged Identity & Logistics,"468, 471 IPC",2023-11-05 16:30:00,+91-9811223344,MH-04-KL-8821,Thane
+MH-2024-KLY-0023,Kalyan Town PS,अस्लम भाई,Cross-Border Hawala Distribution,"420, 120B IPC",2024-01-18 10:15:00,+91-9876543210,MH-12-DE-1001,Thane
+MH-2023-THA-0006,Kalyan Town PS,Deepak Chavan,Narcotics Trafficking,"8, 20, 29 NDPS Act",2024-12-02 17:02:39,+91-9358643230,MH-17-AB-8425,Thane
+MH-2023-PUN-0007,Faraskhana PS,Deepak Pathan,Extortion & Robbery,"384, 392 IPC",2025-08-02 17:02:39,+91-9814727279,MH-14-GH-5128,Pune
+MH-2023-PUN-0008,Khadki PS,Nasir Memon,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2025-04-06 17:02:39,+91-9725253732,MH-23-AB-2077,Pune
+MH-2023-MUM-0009,Dharavi PS,Kiran Hegde,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-07-11 17:02:39,+91-9914065082,MH-40-CD-5166,Mumbai
+MH-2023-KOL-0010,Shahupuri PS,Irfan Khan,Hawala & Money Laundering,"420, 120B IPC",2025-04-20 17:02:39,+91-7734540016,MH-04-AB-2896,Kolhapur
+MH-2023-NAG-0011,Sitabuldi PS,Rajesh Hegde,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-09-09 17:02:39,+91-7078775465,MH-08-AB-3296,Nagpur
+MH-2023-PUN-0012,Shivajinagar PS,Sachin Chavan,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-03-22 17:02:39,+91-9899537861,MH-34-GH-1284,Pune
+MH-2023-THA-0013,Naupada PS,Rajesh Memon,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-04-19 17:02:39,+91-8842001992,MH-24-AB-8793,Thane
+MH-2023-MUM-0014,MRA Marg PS,Irfan Deshmukh,Hawala & Money Laundering,"420, 120B IPC",2025-07-24 17:02:39,+91-9880742624,MH-11-DE-3946,Mumbai
+MH-2023-NAS-0015,Panchavati PS,Shakeel Bhat,Extortion & Robbery,"384, 392 IPC",2025-04-27 17:02:39,+91-9770222137,MH-36-DE-8233,Nashik
+MH-2023-PUN-0016,Faraskhana PS,Manoj Kamath,Extortion & Robbery,"384, 392 IPC",2025-07-22 17:02:39,+91-9339202906,MH-35-GH-8370,Pune
+MH-2023-PUN-0017,Faraskhana PS,Irfan Bhat,Extortion & Robbery,"384, 392 IPC",2024-12-14 17:02:39,+91-9972012158,MH-43-AB-1514,Pune
+MH-2023-MUM-0018,MRA Marg PS,Pradeep Shinde,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-07-03 17:02:39,+91-8879157951,MH-31-JK-1843,Mumbai
+MH-2023-PUN-0019,Shivajinagar PS,Suresh Memon,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-06-16 17:02:39,+91-9866447100,MH-36-EF-6643,Pune
+MH-2023-MUM-0020,Dharavi PS,Salim Deshmukh,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-03-07 17:02:39,+91-9833983838,MH-41-AB-5880,Mumbai
+MH-2023-PUN-0021,Shivajinagar PS,Salim Chavan,Extortion & Robbery,"384, 392 IPC",2026-03-31 17:02:39,+91-8869762537,MH-31-LM-1411,Pune
+MH-2023-PUN-0022,Faraskhana PS,Arjun Hegde,Narcotics Trafficking,"8, 20, 29 NDPS Act",2024-11-05 17:02:39,+91-9976239765,MH-03-GH-8119,Pune
+MH-2023-MUM-0023,Dharavi PS,Nasir Sawant,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-08-02 17:02:39,+91-8715907608,MH-39-GH-7996,Mumbai
+MH-2023-THA-0024,Naupada PS,Vikram Jadhav,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-07-23 17:02:39,+91-8844857538,MH-31-CD-9034,Thane
+MH-2023-THA-0025,Mumbra PS,Ajay Siddiqui,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-04-23 17:02:39,+91-9997815091,MH-38-DE-5034,Thane
+MH-2023-PUN-0026,Faraskhana PS,Anil Rao,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-08-12 17:02:39,+91-9962064510,MH-06-EF-2167,Pune
+MH-2023-THA-0027,Mumbra PS,Farhan Shetty,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-09-01 17:02:39,+91-7737534420,MH-41-AB-1675,Thane
+MH-2023-KOL-0028,Shahupuri PS,Ajay Gowda,Narcotics Trafficking,"8, 20, 29 NDPS Act",2024-11-16 17:02:39,+91-8781643093,MH-02-BC-3085,Kolhapur
+MH-2023-THA-0029,Naupada PS,Irfan Kamath,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-05-13 17:02:39,+91-8842695276,MH-36-BC-3458,Thane
+MH-2023-THA-0030,Kalyan Town PS,Prakash Rao,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-06-02 17:02:39,+91-9885167028,MH-07-LM-6312,Thane
+MH-2023-PUN-0031,Faraskhana PS,Mohammad Pathan,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-04-04 17:02:39,+91-9852350069,MH-12-LM-3312,Pune
+MH-2023-PUN-0032,Khadki PS,Manoj Siddiqui,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-04-19 17:02:39,+91-8739100424,MH-33-AB-1099,Pune
+MH-2023-MUM-0033,Dharavi PS,Prakash Jadhav,Smuggling & Contraband,"135 Customs Act, 120B IPC",2024-11-29 17:02:39,+91-9842935331,MH-40-GH-2088,Mumbai
+MH-2023-MUM-0034,MRA Marg PS,Anil Rao,Extortion & Robbery,"384, 392 IPC",2026-08-28 17:02:39,+91-9918876333,MH-24-LM-8068,Mumbai
+MH-2023-PUN-0035,Khadki PS,Sunil Shaikh,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-01-02 17:02:39,+91-8744131830,MH-19-CD-5432,Pune
+MH-2023-MUM-0036,Dharavi PS,Ramesh Reddy,Hawala & Money Laundering,"420, 120B IPC",2025-07-23 17:02:39,+91-7059416057,MH-20-LM-1303,Mumbai
+MH-2023-THA-0037,Mumbra PS,Rahul Naik,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-09-02 17:02:39,+91-9321445297,MH-07-EF-4154,Thane
+MH-2023-MUM-0038,Dharavi PS,Kishore Memon,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-01-26 17:02:39,+91-7751455979,MH-11-JK-3353,Mumbai
+MH-2023-MUM-0039,Dharavi PS,Prakash Patil,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-07-16 17:02:39,+91-7013891202,MH-06-JK-4344,Mumbai
+MH-2023-PUN-0040,Faraskhana PS,Ajay Chavan,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-10-26 17:02:39,+91-9865456186,MH-07-EF-2036,Pune
+MH-2023-PUN-0041,Shivajinagar PS,Prakash Naik,Narcotics Trafficking,"8, 20, 29 NDPS Act",2024-12-30 17:02:39,+91-8779472247,MH-01-LM-4249,Pune
+MH-2023-PUN-0042,Khadki PS,Manoj Kadam,Hawala & Money Laundering,"420, 120B IPC",2026-02-24 17:02:39,+91-8846865462,MH-13-AB-3477,Pune
+MH-2023-PUN-0043,Khadki PS,Imran Khan,Hawala & Money Laundering,"420, 120B IPC",2025-07-29 17:02:39,+91-9772236085,MH-11-BC-5111,Pune
+MH-2023-MUM-0044,Bandra PS,Mohammad Qureshi,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2025-06-02 17:02:39,+91-9818371509,MH-18-DE-9004,Mumbai
+MH-2023-PUN-0045,Khadki PS,Vijay Patil,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2025-12-05 17:02:39,+91-9786197938,MH-01-EF-8620,Pune
+MH-2023-PUN-0046,Faraskhana PS,Mohammad Reddy,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2025-08-13 17:02:39,+91-8845776931,MH-47-CD-2008,Pune
+MH-2023-THA-0047,Naupada PS,Mohammad Pawar,Narcotics Trafficking,"8, 20, 29 NDPS Act",2024-12-03 17:02:39,+91-7033153315,MH-18-LM-6553,Thane
+MH-2023-MUM-0048,Bandra PS,Kishore Reddy,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-12-12 17:02:39,+91-9982795181,MH-11-CD-8045,Mumbai
+MH-2023-MUM-0049,MRA Marg PS,Shakeel Jadhav,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-06-15 17:02:39,+91-9930988187,MH-09-CD-5804,Mumbai
+MH-2023-KOL-0050,Shahupuri PS,Rajesh Shinde,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-04-06 17:02:39,+91-7746134495,MH-08-GH-6397,Kolhapur
+MH-2023-PUN-0051,Khadki PS,Nasir Patil,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2024-10-23 17:02:39,+91-7779183958,MH-11-LM-5113,Pune
+MH-2023-NAS-0052,Panchavati PS,Ganesh Kamath,Narcotics Trafficking,"8, 20, 29 NDPS Act",2024-11-11 17:02:39,+91-8823170073,MH-10-LM-2821,Nashik
+MH-2023-KOL-0053,Shahupuri PS,Imran Sawant,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-12-16 17:02:39,+91-9399046130,MH-29-DE-5419,Kolhapur
+MH-2023-THA-0054,Mumbra PS,Ramesh Shaikh,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2025-11-15 17:02:39,+91-9923494164,MH-31-DE-3390,Thane
+MH-2023-NAG-0055,Sitabuldi PS,Kiran Reddy,Extortion & Robbery,"384, 392 IPC",2026-03-19 17:02:39,+91-8785439656,MH-26-DE-4870,Nagpur
+MH-2023-MUM-0056,MRA Marg PS,Sanjay Hegde,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-09-20 17:02:39,+91-7735368108,MH-37-JK-5376,Mumbai
+MH-2023-NAG-0057,Sitabuldi PS,Nasir Sayed,Hawala & Money Laundering,"420, 120B IPC",2024-12-02 17:02:39,+91-9368423009,MH-38-GH-7824,Nagpur
+MH-2023-PUN-0058,Khadki PS,Kishore Shinde,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-06-29 17:02:39,+91-9770763723,MH-08-AB-6275,Pune
+MH-2023-NAG-0059,Sitabuldi PS,Ajay Siddiqui,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-03-09 17:02:39,+91-9337425431,MH-25-BC-7413,Nagpur
+MH-2023-PUN-0060,Khadki PS,Rajesh Rao,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2024-12-27 17:02:39,+91-7052563020,MH-38-JK-5814,Pune
+MH-2023-NAS-0061,Panchavati PS,Sunil Gowda,Extortion & Robbery,"384, 392 IPC",2024-09-30 17:02:39,+91-9366670044,MH-14-EF-7338,Nashik
+MH-2023-KOL-0062,Shahupuri PS,Nasir Shaikh,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2024-12-02 17:02:39,+91-9324277417,MH-24-DE-8575,Kolhapur
+MH-2023-MUM-0063,MRA Marg PS,Ramesh Pathan,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-02-23 17:02:39,+91-7050254131,MH-40-DE-5692,Mumbai
+MH-2023-NAS-0064,Panchavati PS,Tariq Bhat,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-01-10 17:02:39,+91-9777381671,MH-26-LM-2865,Nashik
+MH-2023-PUN-0065,Shivajinagar PS,Sanjay Jadhav,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2024-12-18 17:02:39,+91-8796479115,MH-19-GH-7758,Pune
+MH-2023-KOL-0066,Shahupuri PS,Tariq Pathan,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-04-24 17:02:39,+91-8744557331,MH-34-GH-5043,Kolhapur
+MH-2023-PUN-0067,Shivajinagar PS,Ganesh Pawar,Smuggling & Contraband,"135 Customs Act, 120B IPC",2026-07-10 17:02:39,+91-8874891910,MH-12-AB-3870,Pune
+MH-2023-THA-0068,Mumbra PS,Amit Patil,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-07-12 17:02:39,+91-8874863141,MH-30-GH-1647,Thane
+MH-2023-NAG-0069,Sitabuldi PS,Sachin Kamath,Extortion & Robbery,"384, 392 IPC",2025-08-16 17:02:39,+91-9948924999,MH-43-GH-3561,Nagpur
+MH-2023-PUN-0070,Shivajinagar PS,Tariq Siddiqui,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-01-18 17:02:39,+91-7738738816,MH-24-DE-3109,Pune
+MH-2023-KOL-0071,Shahupuri PS,Suresh Pawar,Extortion & Robbery,"384, 392 IPC",2025-02-15 17:02:39,+91-8871160183,MH-48-EF-3138,Kolhapur
+MH-2023-THA-0072,Mumbra PS,Rajesh Gowda,Extortion & Robbery,"384, 392 IPC",2025-07-09 17:02:39,+91-8833946234,MH-14-AB-8938,Thane
+MH-2023-THA-0073,Mumbra PS,Kishore Hegde,Extortion & Robbery,"384, 392 IPC",2024-09-28 17:02:39,+91-9319978889,MH-14-LM-9673,Thane
+MH-2023-MUM-0074,MRA Marg PS,Shakeel Patil,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-03-18 17:02:39,+91-9335016725,MH-38-BC-6723,Mumbai
+MH-2023-PUN-0075,Khadki PS,Imran Chavan,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-02-17 17:02:39,+91-9348475092,MH-33-EF-4251,Pune
+MH-2023-THA-0076,Mumbra PS,Kishore Pawar,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-11-09 17:02:39,+91-9735236511,MH-21-CD-3277,Thane
+MH-2023-THA-0077,Mumbra PS,Vikram Shetty,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2025-05-27 17:02:39,+91-8840355615,MH-14-DE-3987,Thane
+MH-2023-KOL-0078,Shahupuri PS,Anil Deshmukh,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-09-02 17:02:39,+91-9361569218,MH-48-DE-2925,Kolhapur
+MH-2023-PUN-0079,Khadki PS,Farhan Kadam,Smuggling & Contraband,"135 Customs Act, 120B IPC",2026-05-14 17:02:39,+91-7754694837,MH-10-EF-1548,Pune
+MH-2023-PUN-0080,Shivajinagar PS,Vijay Pawar,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2025-09-30 17:02:39,+91-9846095969,MH-21-BC-9338,Pune
+MH-2023-PUN-0081,Khadki PS,Ganesh Pawar,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-06-26 17:02:39,+91-9384464440,MH-03-GH-3877,Pune
+MH-2023-THA-0082,Mumbra PS,Kiran Memon,Hawala & Money Laundering,"420, 120B IPC",2025-03-13 17:02:39,+91-7046049792,MH-10-LM-1267,Thane
+MH-2023-PUN-0083,Faraskhana PS,Anil Pathan,Narcotics Trafficking,"8, 20, 29 NDPS Act",2024-09-30 17:02:39,+91-9916671742,MH-45-LM-2671,Pune
+MH-2023-MUM-0084,MRA Marg PS,Deepak Kamath,Hawala & Money Laundering,"420, 120B IPC",2026-09-02 17:02:39,+91-8748040626,MH-36-LM-9641,Mumbai
+MH-2023-MUM-0085,Bandra PS,Prakash Kadam,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-09-06 17:02:39,+91-8753122282,MH-34-LM-6824,Mumbai
+MH-2023-NAG-0086,Sitabuldi PS,Irfan Hegde,Narcotics Trafficking,"8, 20, 29 NDPS Act",2024-10-30 17:02:39,+91-7727966847,MH-44-CD-8507,Nagpur
+MH-2023-NAG-0087,Sitabuldi PS,Prakash Rao,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-02-25 17:02:39,+91-9931296298,MH-42-GH-7259,Nagpur
+MH-2023-PUN-0088,Shivajinagar PS,Sunil Naik,Extortion & Robbery,"384, 392 IPC",2026-01-24 17:02:39,+91-9389101920,MH-32-AB-9092,Pune
+MH-2023-PUN-0089,Khadki PS,Vikram Kamath,Hawala & Money Laundering,"420, 120B IPC",2026-03-01 17:02:39,+91-9381321916,MH-03-GH-7997,Pune
+MH-2023-THA-0090,Kalyan Town PS,Rajesh Shaikh,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-02-21 17:02:39,+91-9338101001,MH-03-GH-1185,Thane
+MH-2023-PUN-0091,Shivajinagar PS,Ganesh Gowda,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-05-16 17:02:39,+91-8823288985,MH-20-LM-5993,Pune
+MH-2023-NAG-0092,Sitabuldi PS,Nasir Siddiqui,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-04-23 17:02:39,+91-7021202428,MH-15-JK-2690,Nagpur
+MH-2023-THA-0093,Kalyan Town PS,Salim Kadam,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-03-17 17:02:39,+91-9926390315,MH-07-LM-4989,Thane
+MH-2023-NAS-0094,Panchavati PS,Suresh Pawar,Extortion & Robbery,"384, 392 IPC",2026-03-15 17:02:39,+91-9861727367,MH-01-JK-1794,Nashik
+MH-2023-NAS-0095,Panchavati PS,Nasir Pawar,Smuggling & Contraband,"135 Customs Act, 120B IPC",2026-03-26 17:02:39,+91-9888718155,MH-07-CD-2641,Nashik
+MH-2023-MUM-0096,MRA Marg PS,Prakash Reddy,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-05-08 17:02:39,+91-9955613084,MH-11-AB-3881,Mumbai
+MH-2023-THA-0097,Naupada PS,Tariq Hegde,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-01-30 17:02:39,+91-7070709750,MH-07-AB-7766,Thane
+MH-2023-KOL-0098,Shahupuri PS,Farhan Chavan,Extortion & Robbery,"384, 392 IPC",2026-04-26 17:02:39,+91-9812596633,MH-09-DE-8452,Kolhapur
+MH-2023-MUM-0099,MRA Marg PS,Santosh Gowda,Hawala & Money Laundering,"420, 120B IPC",2026-05-20 17:02:39,+91-8746408029,MH-17-DE-2776,Mumbai
+MH-2023-THA-0100,Mumbra PS,Salim Sayed,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-07-13 17:02:39,+91-9924635045,MH-18-DE-6734,Thane
+MH-2023-MUM-0101,Dharavi PS,Ajay Khan,Smuggling & Contraband,"135 Customs Act, 120B IPC",2024-11-26 17:02:39,+91-9318478091,MH-05-CD-1695,Mumbai
+MH-2023-THA-0102,Mumbra PS,Rahul Shaikh,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-07-08 17:02:39,+91-7717978861,MH-43-BC-3301,Thane
+MH-2023-PUN-0103,Khadki PS,Manoj Kadam,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-09-12 17:02:39,+91-8826762970,MH-27-AB-4032,Pune
+MH-2023-MUM-0104,Bandra PS,Amit Rao,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-08-26 17:02:39,+91-9830788389,MH-28-EF-2316,Mumbai
+MH-2023-PUN-0105,Khadki PS,Dinesh Ansari,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-01-11 17:02:39,+91-9824627569,MH-21-DE-4796,Pune
+MH-2023-THA-0106,Naupada PS,Mahesh Qureshi,Hawala & Money Laundering,"420, 120B IPC",2025-03-21 17:02:39,+91-9355953979,MH-35-AB-3292,Thane
+MH-2023-THA-0107,Naupada PS,Mohammad Qureshi,Extortion & Robbery,"384, 392 IPC",2026-03-13 17:02:39,+91-9824824015,MH-12-DE-7398,Thane
+MH-2023-KOL-0108,Shahupuri PS,Farhan Kamath,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-01-18 17:02:39,+91-8784229407,MH-08-AB-6032,Kolhapur
+MH-2023-KOL-0109,Shahupuri PS,Mahesh Shetty,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-06-22 17:02:39,+91-9894323551,MH-47-EF-8711,Kolhapur
+MH-2023-THA-0110,Mumbra PS,Dinesh Hegde,Extortion & Robbery,"384, 392 IPC",2026-06-14 17:02:39,+91-9759446489,MH-34-GH-5995,Thane
+MH-2023-MUM-0111,Bandra PS,Ramesh Reddy,Hawala & Money Laundering,"420, 120B IPC",2025-05-03 17:02:39,+91-7064419701,MH-20-EF-1198,Mumbai
+MH-2023-MUM-0112,MRA Marg PS,Vijay Reddy,Hawala & Money Laundering,"420, 120B IPC",2026-09-01 17:02:39,+91-7761010364,MH-35-EF-6365,Mumbai
+MH-2023-MUM-0113,Bandra PS,Kishore Bhat,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-02-21 17:02:39,+91-9829526947,MH-03-GH-3989,Mumbai
+MH-2023-MUM-0114,Bandra PS,Rahul Patil,Hawala & Money Laundering,"420, 120B IPC",2025-08-28 17:02:39,+91-8890179357,MH-09-GH-4729,Mumbai
+MH-2023-KOL-0115,Shahupuri PS,Suresh Kadam,Extortion & Robbery,"384, 392 IPC",2025-11-20 17:02:39,+91-9345087636,MH-32-BC-8066,Kolhapur
+MH-2023-THA-0116,Naupada PS,Kiran Rao,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-03-13 17:02:39,+91-9899552304,MH-35-DE-6047,Thane
+MH-2023-MUM-0117,Dharavi PS,Farhan Rao,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-06-23 17:02:39,+91-8895766396,MH-39-CD-3368,Mumbai
+MH-2023-THA-0118,Kalyan Town PS,Sanjay Hegde,Hawala & Money Laundering,"420, 120B IPC",2026-03-26 17:02:39,+91-8869547235,MH-10-BC-8705,Thane
+MH-2023-NAG-0119,Sitabuldi PS,Farhan Patil,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-01-07 17:02:39,+91-8853888360,MH-07-EF-2416,Nagpur
+MH-2023-THA-0120,Kalyan Town PS,Sachin Naik,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-10-22 17:02:39,+91-9761189459,MH-31-LM-8368,Thane
+MH-2023-THA-0121,Kalyan Town PS,Pradeep Shetty,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2024-11-04 17:02:39,+91-8866214921,MH-27-BC-9015,Thane
+MH-2023-MUM-0122,Bandra PS,Tariq Kamath,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2024-12-14 17:02:39,+91-9884639466,MH-09-BC-8346,Mumbai
+MH-2023-THA-0123,Mumbra PS,Pradeep Sawant,Smuggling & Contraband,"135 Customs Act, 120B IPC",2026-03-31 17:02:39,+91-9826839374,MH-13-CD-5580,Thane
+MH-2023-PUN-0124,Shivajinagar PS,Prakash Bhat,Extortion & Robbery,"384, 392 IPC",2025-03-06 17:02:39,+91-9337765591,MH-07-CD-3581,Pune
+MH-2023-PUN-0125,Faraskhana PS,Sanjay Khan,Extortion & Robbery,"384, 392 IPC",2026-07-05 17:02:39,+91-8898300730,MH-37-BC-4544,Pune
+MH-2023-NAS-0126,Panchavati PS,Santosh Sayed,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-06-04 17:02:39,+91-9754301463,MH-34-AB-5719,Nashik
+MH-2023-MUM-0127,MRA Marg PS,Kiran Sawant,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-09-22 17:02:39,+91-8869086060,MH-39-LM-9300,Mumbai
+MH-2023-KOL-0128,Shahupuri PS,Irfan Memon,Extortion & Robbery,"384, 392 IPC",2025-03-11 17:02:39,+91-8715022330,MH-15-EF-6049,Kolhapur
+MH-2023-MUM-0129,Dharavi PS,Suresh Shaikh,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-05-25 17:02:39,+91-7748958344,MH-45-LM-9686,Mumbai
+MH-2023-NAG-0130,Sitabuldi PS,Prakash Memon,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-07-13 17:02:39,+91-9963881759,MH-19-LM-9564,Nagpur
+MH-2023-THA-0131,Naupada PS,Shakeel Qureshi,Narcotics Trafficking,"8, 20, 29 NDPS Act",2026-08-03 17:02:39,+91-9840647626,MH-35-JK-9510,Thane
+MH-2023-NAG-0132,Sitabuldi PS,Imran Shaikh,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-01-25 17:02:39,+91-7028763358,MH-37-EF-7973,Nagpur
+MH-2023-NAS-0133,Panchavati PS,Farhan Deshmukh,Narcotics Trafficking,"8, 20, 29 NDPS Act",2025-03-09 17:02:39,+91-9311306812,MH-32-CD-6425,Nashik
+MH-2023-PUN-0134,Khadki PS,Suresh Gowda,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2024-12-31 17:02:39,+91-9333322244,MH-35-GH-1656,Pune
+MH-2023-THA-0135,Kalyan Town PS,Vikram Shinde,Hawala & Money Laundering,"420, 120B IPC",2025-01-27 17:02:39,+91-8788291876,MH-44-LM-3387,Thane
+MH-2023-MUM-0136,Bandra PS,Dinesh Gowda,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-07-18 17:02:39,+91-7018183746,MH-20-DE-8453,Mumbai
+MH-2023-THA-0137,Kalyan Town PS,Ganesh Gowda,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2025-09-10 17:02:39,+91-9933571361,MH-47-AB-8174,Thane
+MH-2023-THA-0138,Mumbra PS,Pradeep Pathan,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2026-07-07 17:02:39,+91-9333961494,MH-16-DE-2042,Thane
+MH-2023-THA-0139,Kalyan Town PS,Amit Hegde,Smuggling & Contraband,"135 Customs Act, 120B IPC",2024-12-03 17:02:39,+91-8823258168,MH-39-CD-3546,Thane
+MH-2023-THA-0140,Mumbra PS,Prakash Chavan,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-03-14 17:02:39,+91-9832416037,MH-34-BC-6187,Thane
+MH-2023-KOL-0141,Shahupuri PS,Vijay Pathan,Extortion & Robbery,"384, 392 IPC",2025-07-26 17:02:39,+91-9784915805,MH-32-AB-7581,Kolhapur
+MH-2023-NAS-0142,Panchavati PS,Anil Khan,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-05-07 17:02:39,+91-7033525945,MH-48-GH-2024,Nashik
+MH-2023-THA-0143,Naupada PS,Farhan Khan,Extortion & Robbery,"384, 392 IPC",2025-06-25 17:02:39,+91-7043030959,MH-09-EF-7522,Thane
+MH-2023-THA-0144,Kalyan Town PS,Sunil Siddiqui,Arms Act & Gang Violence,"307 IPC, 25 Arms Act",2025-12-08 17:02:39,+91-7066203775,MH-35-AB-9620,Thane
+MH-2023-MUM-0145,Bandra PS,Vikram Kamath,Smuggling & Contraband,"135 Customs Act, 120B IPC",2025-11-02 17:02:39,+91-7713511591,MH-15-JK-4123,Mumbai
+MH-2023-THA-0146,Naupada PS,Pradeep Gowda,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-01-16 17:02:39,+91-9376486344,MH-25-CD-5167,Thane
+MH-2023-MUM-0147,Dharavi PS,Ramesh Hegde,Cyber Fraud & Syndicate Operations,"419, 420 IPC, 66D IT Act",2026-06-19 17:02:39,+91-7046509936,MH-33-JK-2399,Mumbai
+MH-2023-PUN-0148,Faraskhana PS,Sachin Chavan,Smuggling & Contraband,"135 Customs Act, 120B IPC",2026-06-14 17:02:39,+91-9910627212,MH-12-CD-3834,Pune
+MH-2023-MUM-0149,Bandra PS,Sunil Shaikh,Extortion & Robbery,"384, 392 IPC",2024-11-30 17:02:39,+91-9842444180,MH-10-AB-6797,Mumbai
+MH-2023-THA-0150,Kalyan Town PS,Kiran Chavan,Extortion & Robbery,"384, 392 IPC",2026-03-07 17:02:39,+91-9318202321,MH-22-BC-8481,Thane
