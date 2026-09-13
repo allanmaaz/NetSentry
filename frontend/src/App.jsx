@@ -39,10 +39,10 @@ export default function App() {
         fetchPendingResolutions()
       ]);
       setGraphData(gData);
-      setPendingResolutions(pData);
+      setPendingResolutions(pData || []);
 
       // Auto-select Kingpin on initial load
-      const kingpinNode = gData.nodes.find((n) => n.orbit_level === 0) || gData.nodes[0];
+      const kingpinNode = gData?.nodes?.find((n) => n.orbit_level === 0) || gData?.nodes?.[0];
       if (kingpinNode) {
         setSelectedNodeId(kingpinNode.id);
         const detail = await fetchEntityDetail(kingpinNode.id);
@@ -50,8 +50,7 @@ export default function App() {
         setIsInspectorOpen(true);
       }
     } catch (err) {
-      console.error("Failed to load NetSentry data:", err);
-      showToast("Backend connection failed. Check if FastAPI is running.");
+      console.warn("NetSentry initialization note:", err);
     } finally {
       setIsLoading(false);
     }

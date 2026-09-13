@@ -31,6 +31,8 @@ class SupabaseService:
         self.nodes_data: Dict[str, Dict[str, Any]] = {}
         self.pending_resolutions: List[Dict[str, Any]] = []
         self.audit_log: List[Dict[str, Any]] = []
+        self._betweenness_cache: Optional[Dict[str, float]] = None
+        self._degree_cache: Optional[Dict[str, float]] = None
 
         # Load baseline datasets
         self.load_synthetic_dataset()
