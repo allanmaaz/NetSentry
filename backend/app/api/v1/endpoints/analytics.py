@@ -198,18 +198,49 @@ def parse_narrative(req: ParseNarrativeRequest) -> Dict[str, Any]:
         }
     }
 
-    supabase_service.nodes_data[person_id] = new_node
-    supabase_service.nx_graph.add_node(person_id)
+    from backend.app.services.db_manager import db_manager
 
-    # Link to Kingpin or Operative if shared phone
-    kingpin_id = "person_mohd_aslam"
-    if supabase_service.nx_graph.has_node(kingpin_id):
+    # Persist directly into SQLite
+    db_manager.insert_person({
+        "id": person_id,
+        "canonical_name": name,
+        "risk_score": 76,
+        "risk_tier": "high",
+        "primary_state": req.state or "Maharashtra",
+        "jurisdictions": [req.state or "Maharashtra"],
+        "aliases": aliases
+    })
+
+    if phone:
+        db_manager.insert_identifier(f"id_phone_{person_id}_{phone}", person_id, "PHONE", phone, req.state or "Maharashtra")
+    if vehicle:
+        db_manager.insert_identifier(f"id_veh_{person_id}_{vehicle}", person_id, "VEHICLE", vehicle, req.state or "Maharashtra")
+
+    db_manager.insert_fir({
+        "fir_id": f"FIR-{person_id[-8:]}-2024",
+        "person_id": person_id,
+        "police_station": req.police_station or "Dharavi PS",
+        "crime_type": "Extortion & Syndicate Hawala",
+        "sections": sections,
+        "state": req.state or "Maharashtra"
+    })
+
+    # Dynamically find current Kingpin (Sun node)
+    stats = supabase_service.get_solar_system_graph()["stats"]
+    kingpin_id = stats.get("kingpin_id")
+
+    if kingpin_id and supabase_service.nx_graph.has_node(kingpin_id):
+        edge_id = f"edge_{person_id}_{kingpin_id}"
+        db_manager.insert_edge(edge_id, person_id, kingpin_id, "CALLED", 2.5, "Intercepted Telecom Intercept", True)
         supabase_service.nx_graph.add_edge(
             person_id, kingpin_id,
             type="CALLED",
-            weight=2.0,
-            label="Intercepted Call"
+            weight=2.5,
+            label="Intercepted Telecom Intercept"
         )
+
+    supabase_service.load_dataset()
+
 
     return {
         "status": "success",

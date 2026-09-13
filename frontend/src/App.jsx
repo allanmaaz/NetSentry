@@ -8,6 +8,7 @@ import TimelinePlayer from "./components/TimelinePlayer";
 import TacticalSimModal from "./components/TacticalSimModal";
 import LiveIngestModal from "./components/LiveIngestModal";
 import ModelMetricsModal from "./components/ModelMetricsModal";
+import UploadDatasetModal from "./components/UploadDatasetModal";
 import {
   fetchGraph,
   fetchEntityDetail,
@@ -32,6 +33,7 @@ export default function App() {
   const [neutralizedNodeId, setNeutralizedNodeId] = useState(null);
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [timelineProgress, setTimelineProgress] = useState(100);
 
   const [filterState, setFilterState] = useState("all");
@@ -87,8 +89,8 @@ export default function App() {
   const handleResolve = async (candidateId, action) => {
     try {
       const res = await submitResolutionDecision(candidateId, action);
-      showToast(`Adjudication confirmed: ${action} successfully applied to graph.`);
-      // Reload graph and pending list to show real-time node collapse
+      showToast(`Adjudication confirmed: ${action} successfully committed to database.`);
+      // Reload graph and pending list from database
       const [gData, pData] = await Promise.all([
         fetchGraph(),
         fetchPendingResolutions()
@@ -109,11 +111,11 @@ export default function App() {
     try {
       await reloadDatasets();
       setNeutralizedNodeId(null);
-      showToast("Datasets regenerated! Deccan-Konkan syndicate reset.");
+      showToast("Investigation database synchronized and re-indexed.");
       await loadData();
     } catch (err) {
       console.error("Reload failed:", err);
-      showToast("Failed to reload datasets.");
+      showToast("Failed to reload database.");
     }
   };
 
@@ -142,27 +144,8 @@ export default function App() {
 
   const handleIngestSuccess = (newNode) => {
     if (!newNode) return;
-    setGraphData((prev) => {
-      if (!prev) return prev;
-      const exists = prev.nodes.some((n) => n.id === newNode.id);
-      if (exists) return prev;
-      return {
-        ...prev,
-        nodes: [...prev.nodes, newNode],
-        edges: [
-          ...prev.edges,
-          {
-            source: newNode.id,
-            target: "person_mohd_aslam",
-            type: "CALLED",
-            weight: 2.0,
-            label: "Intercepted Call"
-          }
-        ]
-      };
-    });
-    handleSelectNode(newNode.id);
-    showToast(`Live FIR narrative ingested: '${newNode.name}' spawned in solar orbit.`);
+    loadData();
+    showToast(`Live FIR narrative ingested: '${newNode.name}' committed to database.`);
   };
 
   return (
@@ -179,6 +162,7 @@ export default function App() {
         onReloadData={handleReload}
         onOpenIngest={() => setIsIngestModalOpen(true)}
         onOpenMetrics={() => setIsMetricsModalOpen(true)}
+        onOpenUploadCsv={() => setIsUploadModalOpen(true)}
         isLoading={isLoading}
       />
 
@@ -186,7 +170,7 @@ export default function App() {
       <main className="relative flex-1 w-full h-full overflow-hidden">
         {isLoading && !graphData ? (
           <div className="flex items-center justify-center w-full h-full text-slate-500 font-mono text-sm">
-            Initializing NetSentry Graph Canvas...
+            Connecting to NetSentry Intelligence Database...
           </div>
         ) : (
           <SolarSystemGraph
@@ -255,7 +239,13 @@ export default function App() {
         isOpen={isMetricsModalOpen}
         onClose={() => setIsMetricsModalOpen(false)}
       />
+
+      {/* Real CSV Law Enforcement Dataset Ingestion Modal */}
+      <UploadDatasetModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUploadSuccess={loadData}
+      />
     </div>
   );
 }
-

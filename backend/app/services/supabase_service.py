@@ -1,24 +1,24 @@
 """
-NetSentry Supabase Database Service
-Integrates with Supabase (PostgreSQL) for entity persistence, case records,
-network edges, and Section 65B audit trails.
-Provides seamless fallback to in-memory graph analytics for offline resilience.
+NetSentry Intelligence Database & Graph Service
+Powered by Persistent SQLite Storage (netsentry.db) & Supabase Integration.
+Provides real-world criminal network intelligence, dynamic betweenness centrality,
+automated Indic entity resolution, and Section 65B compliance.
 """
 
 import os
 import csv
 import json
+import io
 from typing import Dict, List, Any, Optional
 import networkx as nx
 
 from backend.app.core.config import settings
+from backend.app.services.db_manager import db_manager
 from backend.app.services.alias_engine import resolve_entity_pair
 from backend.app.services.xai_explainer import (
     generate_entity_resolution_justification,
     generate_risk_score_justification
 )
-
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "data")
 
 class SupabaseService:
     def __init__(self):
@@ -26,16 +26,13 @@ class SupabaseService:
         self.is_connected = False
         self._init_supabase()
 
-        # Resilient In-Memory Graph & Cache
+        # In-memory graph representation synchronized with SQLite
         self.nx_graph = nx.Graph()
         self.nodes_data: Dict[str, Dict[str, Any]] = {}
         self.pending_resolutions: List[Dict[str, Any]] = []
-        self.audit_log: List[Dict[str, Any]] = []
-        self._betweenness_cache: Optional[Dict[str, float]] = None
-        self._degree_cache: Optional[Dict[str, float]] = None
 
-        # Load baseline datasets
-        self.load_synthetic_dataset()
+        # Load database records into graph
+        self.load_dataset()
 
     def _init_supabase(self):
         """Initializes Supabase Client if credentials are provided in settings."""
@@ -47,168 +44,109 @@ class SupabaseService:
                 print(f" Connected to Supabase at {settings.SUPABASE_URL}")
             except Exception as e:
                 self.is_connected = False
-                print(f" Supabase init failed ({e}). Using resilient local graph cache.")
+                print(f" Supabase init failed ({e}). Using persistent local SQLite database.")
         else:
             self.is_connected = False
-            print(" Supabase credentials not configured. Operating in NetSentry Resilient In-Memory Mode.")
+            print(" Operating on Persistent SQLite Database (backend/netsentry.db).")
 
-    def load_synthetic_dataset(self):
-        """Loads and indexes the synthetic MH, KA, and FIU data into memory / Supabase cache."""
+    def load_dataset(self):
+        """Loads records from SQLite database into memory graph."""
         self.nx_graph.clear()
         self.nodes_data.clear()
         self.pending_resolutions.clear()
 
-        mh_file = os.path.join(DATA_DIR, "mh_firs.csv")
-        ka_file = os.path.join(DATA_DIR, "ka_crime_records.json")
-        fiu_file = os.path.join(DATA_DIR, "fiu_transactions.csv")
+        # If DB is empty, auto-seed with real Telgi syndicate records
+        if db_manager.count_persons() == 0:
+            from data.real_telgi_dataset import seed_real_case_data
+            seed_real_case_data()
 
-        # 1. Ingest MH FIRs
-        if os.path.exists(mh_file):
-            with open(mh_file, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    name = row["accused_name"].strip()
-                    person_id = f"person_{name.lower().replace(' ', '_').replace('.', '')}"
-                    
-                    if person_id not in self.nodes_data:
-                        self.nodes_data[person_id] = {
-                            "id": person_id,
-                            "label": name,
-                            "name": name,
-                            "type": "Person",
-                            "state": "Maharashtra",
-                            "jurisdictions": {"Maharashtra"},
-                            "phones": [row["seized_phone"]] if row.get("seized_phone") else [],
-                            "vehicles": [row["vehicle_reg_no"]] if row.get("vehicle_reg_no") else [],
-                            "bank_accounts": [],
-                            "firs": [],
-                            "aliases": []
-                        }
-                        self.nx_graph.add_node(person_id)
-                    else:
-                        if row.get("seized_phone") and row["seized_phone"] not in self.nodes_data[person_id]["phones"]:
-                            self.nodes_data[person_id]["phones"].append(row["seized_phone"])
-                        if row.get("vehicle_reg_no") and row["vehicle_reg_no"] not in self.nodes_data[person_id]["vehicles"]:
-                            self.nodes_data[person_id]["vehicles"].append(row["vehicle_reg_no"])
-                    
-                    self.nodes_data[person_id]["firs"].append({
-                        "fir_id": row["fir_number"],
-                        "station": row["police_station"],
-                        "crime_type": row["offense_type"],
-                        "sections": row["section_ipc"],
-                        "date": row["date_of_fir"],
-                        "state": "Maharashtra"
-                    })
+        # 1. Load Persons
+        persons = db_manager.get_all_persons()
+        for p in persons:
+            pid = p["id"]
+            identifiers = db_manager.get_identifiers_for_person(pid)
+            firs = db_manager.get_firs_for_person(pid)
 
-        # 2. Ingest KA Crime Records
-        if os.path.exists(ka_file):
-            with open(ka_file, "r", encoding="utf-8") as f:
-                ka_records = json.load(f)
-                for row in ka_records:
-                    name = row["suspect_details"].strip()
-                    person_id = f"person_{name.lower().replace(' ', '_').replace('.', '')}"
-                    
-                    if person_id not in self.nodes_data:
-                        self.nodes_data[person_id] = {
-                            "id": person_id,
-                            "label": name,
-                            "name": name,
-                            "type": "Person",
-                            "state": "Karnataka",
-                            "jurisdictions": {"Karnataka"},
-                            "phones": [row["contact_number"]] if row.get("contact_number") else [],
-                            "vehicles": [row["associated_vehicle"]] if row.get("associated_vehicle") else [],
-                            "bank_accounts": [],
-                            "firs": [],
-                            "aliases": []
-                        }
-                        self.nx_graph.add_node(person_id)
-                    else:
-                        self.nodes_data[person_id]["jurisdictions"].add("Karnataka")
-                        if row.get("contact_number") and row["contact_number"] not in self.nodes_data[person_id]["phones"]:
-                            self.nodes_data[person_id]["phones"].append(row["contact_number"])
-                        if row.get("associated_vehicle") and row["associated_vehicle"] not in self.nodes_data[person_id]["vehicles"]:
-                            self.nodes_data[person_id]["vehicles"].append(row["associated_vehicle"])
+            phones = [i["value"] for i in identifiers if i["identifier_type"] == "PHONE"]
+            vehicles = [i["value"] for i in identifiers if i["identifier_type"] == "VEHICLE"]
+            banks = [i["value"] for i in identifiers if i["identifier_type"] == "BANK_ACCOUNT"]
 
-                    self.nodes_data[person_id]["firs"].append({
-                        "fir_id": row["crime_no"],
-                        "station": row["ps_jurisdiction"],
-                        "crime_type": row["major_head"],
-                        "sections": row["ipc_sections_invoked"],
-                        "date": row["reported_datetime"],
-                        "state": "Karnataka"
-                    })
+            self.nodes_data[pid] = {
+                "id": pid,
+                "label": p["canonical_name"],
+                "name": p["canonical_name"],
+                "type": "Person",
+                "state": p.get("primary_state", "Maharashtra"),
+                "jurisdictions": set(p.get("jurisdictions", ["Maharashtra"])),
+                "risk_score": p.get("risk_score", 50),
+                "risk_tier": p.get("risk_tier", "medium"),
+                "betweenness": p.get("betweenness_centrality", 0.0),
+                "orbit_level": p.get("orbit_level", 2),
+                "is_cross_jurisdiction": bool(p.get("is_cross_jurisdiction", False)),
+                "phones": phones,
+                "vehicles": vehicles,
+                "bank_accounts": banks,
+                "firs": [
+                    {
+                        "fir_id": f["fir_id"],
+                        "station": f["police_station"],
+                        "crime_type": f["crime_type"],
+                        "sections": f["sections"],
+                        "date": f["incident_date"],
+                        "state": f["state"]
+                    }
+                    for f in firs
+                ],
+                "aliases": p.get("aliases", [])
+            }
+            self.nx_graph.add_node(pid)
 
-        # 3. Ingest FIU Transactions
-        if os.path.exists(fiu_file):
-            with open(fiu_file, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    s_name = row["sender_name"].strip()
-                    r_name = row["receiver_name"].strip()
-                    s_id = f"person_{s_name.lower().replace(' ', '_').replace('.', '')}"
-                    r_id = f"person_{r_name.lower().replace(' ', '_').replace('.', '')}"
-                    amt = float(row.get("amount_inr", 100000))
-                    
-                    for pid, pname in [(s_id, s_name), (r_id, r_name)]:
-                        if pid not in self.nodes_data:
-                            self.nodes_data[pid] = {
-                                "id": pid,
-                                "label": pname,
-                                "name": pname,
-                                "type": "Person",
-                                "state": "Maharashtra",
-                                "jurisdictions": {"Maharashtra"},
-                                "phones": [],
-                                "vehicles": [],
-                                "bank_accounts": [],
-                                "firs": [],
-                                "aliases": []
-                            }
-                            self.nx_graph.add_node(pid)
-                            
-                    if row["sender_account"] not in self.nodes_data[s_id]["bank_accounts"]:
-                        self.nodes_data[s_id]["bank_accounts"].append(row["sender_account"])
-                    if row["receiver_account"] not in self.nodes_data[r_id]["bank_accounts"]:
-                        self.nodes_data[r_id]["bank_accounts"].append(row["receiver_account"])
+        # 2. Load Edges
+        edges = db_manager.get_all_edges()
+        for e in edges:
+            src = e["source_id"]
+            tgt = e["target_id"]
+            if self.nx_graph.has_node(src) and self.nx_graph.has_node(tgt):
+                self.nx_graph.add_edge(
+                    src, tgt,
+                    id=e["id"],
+                    type=e["relation_type"],
+                    weight=e.get("weight", 1.0),
+                    label=e.get("label", e["relation_type"]),
+                    is_cross_jurisdiction=bool(e.get("is_cross_jurisdiction", False))
+                )
 
-                    self.nx_graph.add_edge(
-                        s_id, r_id,
-                        type="TRANSFERRED_FUNDS",
-                        amount=amt,
-                        flag=row.get("flag_reason", "Fund Transfer"),
-                        weight=round(amt / 100000.0, 2)
-                    )
-
-        # 4. Link Identifiers & Build HITL Queue
+        # 3. Build Dynamic Cross-Jurisdiction Edges from Shared Identifiers
         self._link_shared_identifiers()
+
+        # 4. Detect Cross-Jurisdiction Duplicates (HITL Queue)
         self._build_resolution_candidates()
 
     def _link_shared_identifiers(self):
-        """Creates edges between individuals sharing the same phone or vehicle."""
+        """Connects nodes that share identical telecom MSISDN or vehicle plates."""
         phone_map: Dict[str, List[str]] = {}
-        veh_map: Dict[str, List[str]] = {}
+        vehicle_map: Dict[str, List[str]] = {}
 
-        for pid, data in self.nodes_data.items():
-            for p in data["phones"]:
-                phone_map.setdefault(p, []).append(pid)
-            for v in data["vehicles"]:
-                veh_map.setdefault(v, []).append(pid)
+        for pid, d in self.nodes_data.items():
+            for ph in d.get("phones", []):
+                phone_map.setdefault(ph, []).append(pid)
+            for vh in d.get("vehicles", []):
+                vehicle_map.setdefault(vh, []).append(pid)
 
-        for phone, pids in phone_map.items():
+        for ph, pids in phone_map.items():
             if len(pids) > 1:
                 for i in range(len(pids)):
                     for j in range(i + 1, len(pids)):
                         p1, p2 = pids[i], pids[j]
-                        self.nx_graph.add_edge(
-                            p1, p2,
-                            type="CALLED",
-                            weight=3.5,
-                            shared_phone=phone,
-                            label=f"Shared Phone {phone}"
-                        )
+                        if not self.nx_graph.has_edge(p1, p2):
+                            self.nx_graph.add_edge(
+                                p1, p2,
+                                type="CALLED",
+                                weight=3.0,
+                                label=f"Shared Phone {ph}"
+                            )
 
-        for veh, pids in veh_map.items():
+        for vh, pids in vehicle_map.items():
             if len(pids) > 1:
                 for i in range(len(pids)):
                     for j in range(i + 1, len(pids)):
@@ -218,76 +156,56 @@ class SupabaseService:
                                 p1, p2,
                                 type="ASSOCIATED_WITH",
                                 weight=2.5,
-                                shared_vehicle=veh,
-                                label=f"Shared Vehicle {veh}"
+                                label=f"Shared Vehicle {vh}"
                             )
 
     def _build_resolution_candidates(self):
-        """Scans for potential duplicates across jurisdictions to populate HITL queue."""
+        """Dynamically scans all pairs across jurisdictions using Indic matching & ML."""
         self.pending_resolutions = []
-        
-        # Candidate 1: Mohd. Aslam vs Aslam Bhai (Kingpin cross-jurisdiction)
-        aslam_mh = self.nodes_data.get("person_mohd_aslam")
-        aslam_ka = self.nodes_data.get("person_aslam_bhai")
-        if aslam_mh and aslam_ka:
-            res = resolve_entity_pair(aslam_mh, aslam_ka)
-            justification = generate_entity_resolution_justification(
-                "Mohd. Aslam", "Aslam Bhai", res, "MH Police", "KA Crime"
-            )
-            self.pending_resolutions.append({
-                "candidate_id": "RES-2026-001",
-                "primary_id": "person_mohd_aslam",
-                "primary_name": "Mohd. Aslam",
-                "primary_dept": "Maharashtra Police (MRA Marg PS)",
-                "secondary_id": "person_aslam_bhai",
-                "secondary_name": "Aslam Bhai",
-                "secondary_dept": "Karnataka State Police (Shivajinagar PS)",
-                "confidence_score": res["total_score"],
-                "adjudication_tier": res["tier"],
-                "breakdown": {
-                    "levenshtein_similarity": res["breakdown"]["lev"],
-                    "phonetic_similarity": res["breakdown"]["phonetic"],
-                    "token_sort_ratio": res["breakdown"]["token"],
-                    "base_name_score": res["base_name_score"],
-                    "corroboration_boost": res["corroboration_boost"],
-                    "total_score": res["total_score"]
-                },
-                "shared_identifiers": res["shared_identifiers"],
-                "legal_reasoning": justification
-            })
+        node_ids = list(self.nodes_data.keys())
 
-        # Candidate 2: Iqbal Painter vs Mohd. Iqbal
-        iqbal_mh = self.nodes_data.get("person_mohd_iqbal")
-        iqbal_ka = self.nodes_data.get("person_iqbal_painter")
-        if iqbal_mh and iqbal_ka:
-            res = resolve_entity_pair(iqbal_mh, iqbal_ka)
-            justification = generate_entity_resolution_justification(
-                "Mohd. Iqbal", "Iqbal Painter", res, "MH Police", "KA Crime"
-            )
-            self.pending_resolutions.append({
-                "candidate_id": "RES-2026-002",
-                "primary_id": "person_mohd_iqbal",
-                "primary_name": "Mohd. Iqbal",
-                "primary_dept": "Maharashtra Police (Mumbra PS)",
-                "secondary_id": "person_iqbal_painter",
-                "secondary_name": "Iqbal Painter",
-                "secondary_dept": "Karnataka State Police (Commercial St PS)",
-                "confidence_score": res["total_score"],
-                "adjudication_tier": res["tier"],
-                "breakdown": {
-                    "levenshtein_similarity": res["breakdown"]["lev"],
-                    "phonetic_similarity": res["breakdown"]["phonetic"],
-                    "token_sort_ratio": res["breakdown"]["token"],
-                    "base_name_score": res["base_name_score"],
-                    "corroboration_boost": res["corroboration_boost"],
-                    "total_score": res["total_score"]
-                },
-                "shared_identifiers": res["shared_identifiers"],
-                "legal_reasoning": justification
-            })
+        candidate_counter = 1
+        for i in range(len(node_ids)):
+            for j in range(i + 1, len(node_ids)):
+                p1_id = node_ids[i]
+                p2_id = node_ids[j]
+                p1 = self.nodes_data[p1_id]
+                p2 = self.nodes_data[p2_id]
+
+                # Compare pairs that share jurisdiction or have shared identifiers or similar names
+                res = resolve_entity_pair(p1, p2)
+                if res["total_score"] >= settings.HITL_MIN_THRESHOLD:
+                    justification = generate_entity_resolution_justification(
+                        p1["name"], p2["name"], res,
+                        f"{p1.get('state', 'State')} Police",
+                        f"{p2.get('state', 'State')} Police"
+                    )
+
+                    self.pending_resolutions.append({
+                        "candidate_id": f"RES-2026-{candidate_counter:03d}",
+                        "primary_id": p1_id,
+                        "primary_name": p1["name"],
+                        "primary_dept": f"{p1.get('state')} Police",
+                        "secondary_id": p2_id,
+                        "secondary_name": p2["name"],
+                        "secondary_dept": f"{p2.get('state')} Police",
+                        "confidence_score": res["total_score"],
+                        "adjudication_tier": res["tier"],
+                        "breakdown": {
+                            "levenshtein_similarity": res["breakdown"]["lev"],
+                            "phonetic_similarity": res["breakdown"]["phonetic"],
+                            "token_sort_ratio": res["breakdown"]["token"],
+                            "base_name_score": res["base_name_score"],
+                            "corroboration_boost": res["corroboration_boost"],
+                            "total_score": res["total_score"]
+                        },
+                        "shared_identifiers": res["shared_identifiers"],
+                        "legal_reasoning": justification
+                    })
+                    candidate_counter += 1
 
     def get_solar_system_graph(self) -> Dict[str, Any]:
-        """Calculates betweenness centrality and formats nodes into the Solar System hierarchy."""
+        """Dynamically computes Betweenness Centrality and structures the Solar System hierarchy."""
         if len(self.nx_graph) > 0:
             betweenness = nx.betweenness_centrality(self.nx_graph)
             degree_scores = nx.degree_centrality(self.nx_graph)
@@ -296,49 +214,38 @@ class SupabaseService:
             degree_scores = {}
 
         sorted_nodes = sorted(betweenness.items(), key=lambda x: x[1], reverse=True)
-        kingpin_id = "person_mohd_aslam" if "person_mohd_aslam" in self.nodes_data else (sorted_nodes[0][0] if sorted_nodes else "")
+        kingpin_id = sorted_nodes[0][0] if sorted_nodes else ""
 
         nodes = []
         cross_state_count = 0
 
-        # Filter the top 50 nodes for high performance
-        top_node_ids = set([n[0] for n in sorted_nodes[:45]])
-        top_node_ids.update([
-            "person_mohd_aslam", "person_aslam_bhai", "person_vikram_jadhav",
-            "person_suresh_shetty", "person_farhan_sheikh", "person_mohd_iqbal",
-            "person_iqbal_painter", "person_असलम_भाई"
-        ])
-
-        for pid in top_node_ids:
-            data = self.nodes_data.get(pid)
-            if not data:
-                continue
-
+        for pid, data in self.nodes_data.items():
             b_score = betweenness.get(pid, 0.0)
             p_score = degree_scores.get(pid, 0.0)
-            
-            if pid == kingpin_id or "aslam" in pid:
+
+            # Assign dynamic orbits based on graph bottleneck centrality
+            if pid == kingpin_id:
                 orbit = 0
-                radius = 28
-                risk_score = 94
+                radius = 32
+                risk_score = 98
                 tier = "critical"
-            elif b_score > 0.05 or len(data.get("firs", [])) >= 2:
+            elif b_score > 0.15 or (kingpin_id and self.nx_graph.has_edge(pid, kingpin_id)):
                 orbit = 1
                 radius = 20
-                risk_score = 82
+                risk_score = 86
                 tier = "high"
-            elif b_score > 0.01 or len(data.get("bank_accounts", [])) > 0:
+            elif b_score > 0.02 or len(data.get("phones", [])) > 1:
                 orbit = 2
-                radius = 14
-                risk_score = 64
+                radius = 15
+                risk_score = 70
                 tier = "medium"
             else:
                 orbit = 3
-                radius = 10
-                risk_score = 38
+                radius = 12
+                risk_score = 45
                 tier = "low"
 
-            is_cross = len(data.get("jurisdictions", [])) > 1 or pid in ["person_mohd_aslam", "person_aslam_bhai", "person_suresh_shetty"]
+            is_cross = len(data.get("jurisdictions", [])) > 1 or data.get("is_cross_jurisdiction", False)
             if is_cross:
                 cross_state_count += 1
 
@@ -353,7 +260,7 @@ class SupabaseService:
                 "pagerank": round(p_score, 4),
                 "orbit_level": orbit,
                 "is_cross_jurisdiction": is_cross,
-                "state": list(data.get("jurisdictions", ["Maharashtra"]))[0],
+                "state": data.get("state", "Maharashtra"),
                 "radius": radius,
                 "details": {
                     "phones": data.get("phones", []),
@@ -365,19 +272,18 @@ class SupabaseService:
 
         edges = []
         for u, v, attrs in self.nx_graph.edges(data=True):
-            if u in top_node_ids and v in top_node_ids:
-                u_data = self.nodes_data.get(u, {})
-                v_data = self.nodes_data.get(v, {})
-                cross_link = u_data.get("state") != v_data.get("state")
+            u_data = self.nodes_data.get(u, {})
+            v_data = self.nodes_data.get(v, {})
+            cross_link = u_data.get("state") != v_data.get("state")
 
-                edges.append({
-                    "source": u,
-                    "target": v,
-                    "type": attrs.get("type", "ASSOCIATED_WITH"),
-                    "weight": attrs.get("weight", 1.0),
-                    "label": attrs.get("label", attrs.get("type", "")),
-                    "is_cross_jurisdiction": cross_link
-                })
+            edges.append({
+                "source": u,
+                "target": v,
+                "type": attrs.get("type", "ASSOCIATED_WITH"),
+                "weight": attrs.get("weight", 1.0),
+                "label": attrs.get("label", attrs.get("type", "")),
+                "is_cross_jurisdiction": cross_link
+            })
 
         return {
             "nodes": nodes,
@@ -389,19 +295,19 @@ class SupabaseService:
                 "kingpin_id": kingpin_id,
                 "cross_state_entities": cross_state_count,
                 "pending_hitl_count": len(self.pending_resolutions),
-                "database_backend": "Supabase PostgreSQL" if self.is_connected else "Resilient Cache"
+                "database_backend": "SQLite (netsentry.db) + Supabase" if self.is_connected else "SQLite Persistent (netsentry.db)"
             }
         }
 
     def get_entity_detail(self, entity_id: str) -> Optional[Dict[str, Any]]:
-        """Returns deep dossier for inspector panel."""
+        """Returns verified criminal dossier directly from persistent database."""
         data = self.nodes_data.get(entity_id)
         if not data:
             return None
 
         betweenness = nx.betweenness_centrality(self.nx_graph) if len(self.nx_graph) > 0 else {}
         b_score = betweenness.get(entity_id, 0.0)
-        
+
         sorted_ranks = sorted(betweenness.items(), key=lambda x: x[1], reverse=True)
         rank = 1
         for idx, (nid, _) in enumerate(sorted_ranks):
@@ -409,8 +315,8 @@ class SupabaseService:
                 rank = idx + 1
                 break
 
-        is_cross = len(data.get("jurisdictions", [])) > 1 or entity_id in ["person_mohd_aslam", "person_aslam_bhai", "person_suresh_shetty"]
-        
+        is_cross = len(data.get("jurisdictions", [])) > 1 or data.get("is_cross_jurisdiction", False)
+
         associates = []
         if self.nx_graph.has_node(entity_id):
             for neighbor in self.nx_graph.neighbors(entity_id):
@@ -423,23 +329,12 @@ class SupabaseService:
                     "details": edge_data.get("label", "")
                 })
 
-        if rank == 1 or "aslam" in entity_id:
-            risk_score = 94
-            risk_tier = "critical"
-        elif rank <= 5:
-            risk_score = 82
-            risk_tier = "high"
-        else:
-            risk_score = 64
-            risk_tier = "medium"
+        risk_score = 95 if rank == 1 else (85 if rank <= 3 else (70 if rank <= 6 else 45))
+        risk_tier = "critical" if risk_score >= 90 else ("high" if risk_score >= 75 else "medium")
 
         justification = generate_risk_score_justification(
-            data["name"],
-            risk_score,
-            b_score,
-            is_cross,
-            len(data.get("firs", [])),
-            len(associates)
+            data["name"], risk_score, b_score, is_cross,
+            len(data.get("firs", [])), len(associates)
         )
 
         return {
@@ -451,7 +346,7 @@ class SupabaseService:
             "centrality_rank": rank,
             "betweenness_score": round(b_score, 4),
             "is_cross_jurisdiction": is_cross,
-            "states": list(data.get("jurisdictions", ["Maharashtra"])),
+            "states": list(data.get("jurisdictions", [data.get("state", "Maharashtra")])),
             "phones": data.get("phones", []),
             "vehicles": data.get("vehicles", []),
             "bank_accounts": data.get("bank_accounts", []),
@@ -460,96 +355,148 @@ class SupabaseService:
             "legal_justification": justification
         }
 
-    def apply_merge_decision(self, candidate_id: str, action: str, officer_id: str, notes: str = "") -> Dict[str, Any]:
-        """Executes HITL merge or rejection with atomic node collapse."""
-        target = None
-        for item in self.pending_resolutions:
-            if item["candidate_id"] == candidate_id:
-                target = item
-                break
+    def get_pending_resolutions(self) -> List[Dict[str, Any]]:
+        return self.pending_resolutions
 
-        if not target:
-            return {"status": "error", "message": f"Candidate {candidate_id} not found."}
+    def apply_resolution_decision(self, candidate_id: str, action: str, officer_id: str = "OFFICER-001", notes: str = "") -> Dict[str, Any]:
+        """
+        Executes atomic merge or rejection in the persistent SQLite database
+        and updates the live graph in real-time.
+        """
+        candidate = next((c for c in self.pending_resolutions if c["candidate_id"] == candidate_id), None)
+        if not candidate:
+            return {"status": "error", "message": "Candidate not found"}
 
-        p1_id = target["primary_id"]
-        p2_id = target["secondary_id"]
+        primary_id = candidate["primary_id"]
+        secondary_id = candidate["secondary_id"]
 
-        if action.upper() == "MERGE":
-            if p1_id in self.nodes_data and p2_id in self.nodes_data:
-                p1 = self.nodes_data[p1_id]
-                p2 = self.nodes_data[p2_id]
+        if action == "MERGE":
+            primary = self.nodes_data.get(primary_id)
+            secondary = self.nodes_data.get(secondary_id)
 
-                if p2["name"] not in p1.get("aliases", []):
-                    p1.setdefault("aliases", []).append(p2["name"])
-                
-                for ph in p2.get("phones", []):
-                    if ph not in p1["phones"]:
-                        p1["phones"].append(ph)
-                        
-                for v in p2.get("vehicles", []):
-                    if v not in p1["vehicles"]:
-                        p1["vehicles"].append(v)
-                        
-                for acc in p2.get("bank_accounts", []):
-                    if acc not in p1["bank_accounts"]:
-                        p1["bank_accounts"].append(acc)
+            if primary and secondary:
+                # 1. Merge Aliases, Phones, Vehicles, FIRs
+                merged_aliases = list(set(primary.get("aliases", []) + [secondary["name"]] + secondary.get("aliases", [])))
+                primary["aliases"] = merged_aliases
+                primary["jurisdictions"].update(secondary.get("jurisdictions", set()))
+                primary["is_cross_jurisdiction"] = True
 
-                p1["jurisdictions"].update(p2.get("jurisdictions", set()))
-                p1["firs"].extend(p2.get("firs", []))
+                for p in secondary.get("phones", []):
+                    if p not in primary["phones"]:
+                        primary["phones"].append(p)
+                for v in secondary.get("vehicles", []):
+                    if v not in primary["vehicles"]:
+                        primary["vehicles"].append(v)
+                for f in secondary.get("firs", []):
+                    primary["firs"].append(f)
 
-                if self.nx_graph.has_node(p2_id):
-                    for neighbor in list(self.nx_graph.neighbors(p2_id)):
-                        if neighbor != p1_id:
-                            edge_data = self.nx_graph.get_edge_data(p2_id, neighbor)
-                            self.nx_graph.add_edge(p1_id, neighbor, **edge_data)
-                    self.nx_graph.remove_node(p2_id)
+                # 2. Reroute graph edges from secondary to primary
+                if self.nx_graph.has_node(secondary_id):
+                    for neighbor in list(self.nx_graph.neighbors(secondary_id)):
+                        if neighbor != primary_id:
+                            edge_data = self.nx_graph.get_edge_data(secondary_id, neighbor)
+                            self.nx_graph.add_edge(primary_id, neighbor, **edge_data)
+                    self.nx_graph.remove_node(secondary_id)
 
-                del self.nodes_data[p2_id]
+                # 3. Update SQLite Database Permanently
+                with db_manager.get_connection() as conn:
+                    cursor = conn.cursor()
+                    # Update secondary FIRs and identifiers to point to primary
+                    cursor.execute("UPDATE firs SET person_id = ? WHERE person_id = ?", (primary_id, secondary_id))
+                    cursor.execute("UPDATE identifiers SET person_id = ? WHERE person_id = ?", (primary_id, secondary_id))
+                    cursor.execute("DELETE FROM persons WHERE id = ?", (secondary_id,))
+                    cursor.execute("DELETE FROM network_edges WHERE source_id = ? OR target_id = ?", (secondary_id, secondary_id))
+                    conn.commit()
 
-            self.audit_log.append({
-                "timestamp": "2026-09-13T17:18:00Z",
-                "action": "MERGE_CONFIRMED",
+                # Update primary person in SQLite
+                db_manager.insert_person(primary)
+
+                # Remove from in-memory cache
+                self.nodes_data.pop(secondary_id, None)
+
+        # Log Section 65B Audit Trail
+        db_manager.log_audit(
+            action=action,
+            entity_id=primary_id,
+            officer_id=officer_id,
+            details={
                 "candidate_id": candidate_id,
-                "officer_id": officer_id,
-                "primary": p1_id,
-                "secondary": p2_id,
-                "notes": notes
+                "secondary_id": secondary_id,
+                "notes": notes,
+                "confidence": candidate["confidence_score"]
+            }
+        )
+
+        # Remove from pending list
+        self.pending_resolutions = [c for c in self.pending_resolutions if c["candidate_id"] != candidate_id]
+
+        return {
+            "status": "success",
+            "action": action,
+            "candidate_id": candidate_id,
+            "canonical_id": primary_id
+        }
+
+    def ingest_csv_data(self, csv_text: str) -> Dict[str, Any]:
+        """
+        Ingests user-uploaded raw CSV text, inserts records into SQLite,
+        and dynamically rebuilds the network graph.
+        """
+        reader = csv.DictReader(io.StringIO(csv_text.strip()))
+        ingested_count = 0
+
+        for row in reader:
+            name = row.get("name") or row.get("accused_name") or row.get("suspect")
+            if not name:
+                continue
+            name = name.strip()
+            person_id = f"person_{name.lower().replace(' ', '_').replace('.', '')}"
+            state = row.get("state") or row.get("jurisdiction") or "Maharashtra"
+            station = row.get("police_station") or row.get("station") or "General PS"
+            sections = row.get("sections") or row.get("ipc_sections") or "120B IPC"
+            phone = row.get("phone") or row.get("contact") or ""
+            vehicle = row.get("vehicle") or row.get("plate") or ""
+            alias = row.get("alias") or ""
+            aliases = [alias.strip()] if alias.strip() else []
+
+            person_data = {
+                "id": person_id,
+                "canonical_name": name,
+                "risk_score": int(row.get("risk_score", 70)),
+                "risk_tier": "high",
+                "betweenness_centrality": 0.05,
+                "orbit_level": 2,
+                "is_cross_jurisdiction": False,
+                "primary_state": state,
+                "jurisdictions": [state],
+                "aliases": aliases
+            }
+            db_manager.insert_person(person_data)
+
+            if phone:
+                db_manager.insert_identifier(f"id_phone_{person_id}_{phone}", person_id, "PHONE", phone, state)
+            if vehicle:
+                db_manager.insert_identifier(f"id_veh_{person_id}_{vehicle}", person_id, "VEHICLE", vehicle, state)
+
+            fir_id = row.get("fir_id") or row.get("crime_no") or f"FIR-{person_id[:10]}-{ingested_count}"
+            db_manager.insert_fir({
+                "fir_id": fir_id,
+                "person_id": person_id,
+                "police_station": station,
+                "crime_type": row.get("crime_type", "IPC Offense"),
+                "sections": sections,
+                "incident_date": row.get("date"),
+                "state": state
             })
-            
-            # Sync to Supabase if connected
-            if self.is_connected and self.client:
-                try:
-                    self.client.table("hitl_resolutions").update({
-                        "status": "MERGED",
-                        "resolved_by": officer_id,
-                        "officer_notes": notes
-                    }).eq("candidate_id", candidate_id).execute()
-                except Exception as e:
-                    print(f"Supabase update error: {e}")
+            ingested_count += 1
 
-            self.pending_resolutions = [r for r in self.pending_resolutions if r["candidate_id"] != candidate_id]
-            return {"status": "success", "action": "MERGED", "canonical_id": p1_id}
+        # Re-index dataset into memory graph
+        self.load_dataset()
 
-        else:
-            self.audit_log.append({
-                "timestamp": "2026-09-13T17:18:00Z",
-                "action": "MERGE_REJECTED",
-                "candidate_id": candidate_id,
-                "officer_id": officer_id,
-                "notes": notes
-            })
-            if self.is_connected and self.client:
-                try:
-                    self.client.table("hitl_resolutions").update({
-                        "status": "REJECTED",
-                        "resolved_by": officer_id,
-                        "officer_notes": notes
-                    }).eq("candidate_id", candidate_id).execute()
-                except Exception as e:
-                    print(f"Supabase update error: {e}")
+        return {
+            "status": "success",
+            "ingested_records": ingested_count,
+            "total_graph_nodes": len(self.nodes_data)
+        }
 
-            self.pending_resolutions = [r for r in self.pending_resolutions if r["candidate_id"] != candidate_id]
-            return {"status": "success", "action": "REJECTED"}
-
-# Global singleton
 supabase_service = SupabaseService()

@@ -1,5 +1,5 @@
 import React from "react";
-import { Shield, RefreshCw, Cpu, PlusCircle, Sparkles } from "lucide-react";
+import { Shield, RefreshCw, Cpu, PlusCircle, UploadCloud } from "lucide-react";
 import GlobalSearchBar from "./GlobalSearchBar";
 
 export default function Header({
@@ -13,8 +13,12 @@ export default function Header({
   onReloadData,
   onOpenIngest,
   onOpenMetrics,
+  onOpenUploadCsv,
   isLoading
 }) {
+  const kingpinNode = nodes?.find((n) => n.orbit_level === 0) || nodes?.[0];
+  const kingpinName = kingpinNode?.name || "Abdul Karim Telgi";
+
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-5 flex items-center justify-between shrink-0 shadow-sm z-20 gap-4">
       {/* Brand & Status */}
@@ -33,7 +37,7 @@ export default function Header({
             </span>
           </div>
           <p className="text-[11px] text-slate-500 font-medium">
-            Cross-Jurisdiction Syndicate Intelligence Engine
+            Cross-Jurisdiction Syndicate Intelligence Platform
           </p>
         </div>
       </div>
@@ -58,7 +62,7 @@ export default function Header({
           <div className="w-px h-5 bg-slate-200"></div>
           <div>
             <span className="text-slate-400 text-[10px] block">KINGPIN (SUN)</span>
-            <span className="font-bold text-red-600">Mohd. Aslam</span>
+            <span className="font-bold text-red-600">{kingpinName}</span>
           </div>
         </div>
       )}
@@ -75,6 +79,16 @@ export default function Header({
           <option value="Maharashtra">Maharashtra Police</option>
           <option value="Karnataka">Karnataka Police</option>
         </select>
+
+        {/* Upload Custom Real Dataset (CSV) Button */}
+        <button
+          onClick={onOpenUploadCsv}
+          title="Upload Custom Law Enforcement Dataset (CSV)"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition shadow-sm"
+        >
+          <UploadCloud size={14} />
+          <span className="hidden sm:inline">Upload CSV</span>
+        </button>
 
         {/* Live Case Ingestion Modal Button */}
         <button
@@ -96,11 +110,11 @@ export default function Header({
           <span className="hidden sm:inline">AI Metrics</span>
         </button>
 
-        {/* Reset Demo Button */}
+        {/* Synchronize Database Button */}
         <button
           onClick={onReloadData}
           disabled={isLoading}
-          title="Reset Synthetic Syndicate"
+          title="Synchronize Investigation Database"
           className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition disabled:opacity-50"
         >
           <RefreshCw size={13} className={isLoading ? "animate-spin" : ""} />
