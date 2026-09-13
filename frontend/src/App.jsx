@@ -167,7 +167,7 @@ export default function App() {
       />
 
       {/* Main Solar System Graph Workspace */}
-      <main className="relative flex-1 w-full h-full overflow-hidden">
+      <main id="graph-workspace" className="relative flex-1 w-full h-full overflow-hidden">
         {isLoading && !graphData ? (
           <div className="flex items-center justify-center w-full h-full text-slate-500 font-mono text-sm">
             Connecting to NetSentry Intelligence Database...
@@ -197,11 +197,13 @@ export default function App() {
         />
 
         {/* Bottom HITL Review Queue */}
-        <HITLReviewQueue
-          candidates={pendingResolutions}
-          onResolve={handleResolve}
-          isProcessing={isLoading}
-        />
+        <div id="hitl-adjudication">
+          <HITLReviewQueue
+            candidates={pendingResolutions}
+            onResolve={handleResolve}
+            isProcessing={isLoading}
+          />
+        </div>
 
         {/* Toast Notification Banner */}
         {toastMessage && (
@@ -210,6 +212,27 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Accessible Semantic SEO Footer */}
+      <footer className="h-7 bg-white border-t border-slate-200 px-5 flex items-center justify-between text-[11px] text-slate-500 font-mono shrink-0 z-20">
+        <div className="flex items-center gap-2">
+          <span>NetSentry Platform v1.0</span>
+          <span className="text-slate-300">•</span>
+          <span>Section 65B Compliant</span>
+          <span className="text-slate-300 hidden sm:inline">•</span>
+          <span className="text-slate-400 hidden sm:inline">Smart India Hackathon 2026</span>
+        </div>
+        <nav aria-label="Quick Access Navigation" className="flex items-center gap-3">
+          <a href="#graph-workspace" className="hover:text-slate-900 transition">Canvas</a>
+          <span className="text-slate-300">•</span>
+          <a href="#hitl-adjudication" className="hover:text-slate-900 transition">Adjudication</a>
+          <span className="text-slate-300">•</span>
+          <a href="https://github.com/allanmaaz/NetSentry" target="_blank" rel="noopener noreferrer" className="hover:text-sky-600 transition">GitHub</a>
+          <span className="text-slate-300">•</span>
+          <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="hover:text-sky-600 transition">Sitemap</a>
+        </nav>
+      </footer>
+
 
       {/* Section 65B Court Dossier Modal */}
       <DossierModal

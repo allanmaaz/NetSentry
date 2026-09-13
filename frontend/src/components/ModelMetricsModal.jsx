@@ -27,9 +27,10 @@ export default function ModelMetricsModal({ isOpen, onClose }) {
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Cpu size={18} className="text-slate-900" />
-            <span className="font-bold text-xs font-mono uppercase tracking-wider text-slate-900">
+            <h2 className="font-bold text-xs font-mono uppercase tracking-wider text-slate-900">
               AI MODEL TRAINING & EVALUATION BENCHMARK
-            </span>
+            </h2>
+
           </div>
           <button
             onClick={onClose}

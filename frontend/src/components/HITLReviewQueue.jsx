@@ -20,9 +20,9 @@ export default function HITLReviewQueue({
         >
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-emerald-400" />
-            <span className="tracking-wide uppercase font-mono">
+            <h2 className="tracking-wide uppercase font-mono text-xs font-semibold">
               HUMAN-IN-THE-LOOP (HITL) ADJUDICATION DOCK
-            </span>
+            </h2>
             <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-mono text-[10px] font-bold">
               {candidates.length} PENDING
             </span>
@@ -51,13 +51,14 @@ export default function HITLReviewQueue({
                   <div className="flex-1 space-y-1.5">
                     <div className="flex items-center gap-3">
                       <div>
-                        <div className="font-bold text-slate-900 text-sm">
+                        <h3 className="font-bold text-slate-900 text-sm">
                           {cand.primary_name}
-                        </div>
+                        </h3>
                         <div className="text-[10px] text-slate-500 font-mono">
                           {cand.primary_dept}
                         </div>
                       </div>
+
 
                       <span className="text-slate-400 font-mono text-xs">⟷</span>
 

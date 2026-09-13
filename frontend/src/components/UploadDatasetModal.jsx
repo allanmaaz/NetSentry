@@ -58,9 +58,10 @@ export default function UploadDatasetModal({ isOpen, onClose, onUploadSuccess })
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <UploadCloud size={18} className="text-sky-600" />
-            <span className="font-bold text-xs font-mono uppercase tracking-wider text-slate-900">
+            <h2 className="font-bold text-xs font-mono uppercase tracking-wider text-slate-900">
               INGEST REAL POLICE / COURT DATASET (CSV)
-            </span>
+            </h2>
+
           </div>
           <button
             onClick={onClose}

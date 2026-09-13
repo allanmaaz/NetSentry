@@ -19,9 +19,10 @@ export default function TacticalSimModal({
         <div className="p-4 border-b border-slate-200 bg-red-50/60 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldAlert size={18} className="text-red-600" />
-            <span className="font-bold text-xs font-mono uppercase tracking-wider text-red-900">
+            <h2 className="font-bold text-xs font-mono uppercase tracking-wider text-red-900">
               TACTICAL ARREST IMPACT SIMULATION
-            </span>
+            </h2>
+
           </div>
           <button
             onClick={onClose}

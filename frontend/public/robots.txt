@@ -1,0 +1,18 @@
+# robots.txt for NetSentry Intelligence Platform
+# https://netsentry.pages.dev
+
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Explicit search engine bot directives
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+
+# Sitemap Location
+Sitemap: https://netsentry.pages.dev/sitemap.xml
