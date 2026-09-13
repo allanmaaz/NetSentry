@@ -1,6 +1,93 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import * as d3 from "d3";
 import { ZoomIn, ZoomOut, Compass, RefreshCw } from "lucide-react";
+
+// Canvas Vector Icon Renderers (Crisp, High-DPI, Zero-Lag)
+function drawPersonIcon(ctx, x, y, size, color = "#ffffff") {
+  ctx.save();
+  ctx.fillStyle = color;
+  // Head
+  ctx.beginPath();
+  ctx.arc(x, y - size * 0.28, size * 0.32, 0, Math.PI * 2);
+  ctx.fill();
+  // Shoulders & Chest
+  ctx.beginPath();
+  ctx.arc(x, y + size * 0.65, size * 0.6, Math.PI * 1.25, Math.PI * 1.75);
+  ctx.lineTo(x + size * 0.42, y + size * 0.45);
+  ctx.arc(x, y + size * 0.65, size * 0.6, Math.PI * 1.75, Math.PI * 1.25, true);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawLicenseIcon(ctx, x, y, size, color = "#ffffff") {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.2;
+  const w = size * 1.2;
+  const h = size * 0.85;
+  // Card boundary
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, 1.5);
+  ctx.stroke();
+  // Photo box
+  ctx.fillRect(x - w / 2 + 2, y - h / 2 + 2, w * 0.32, h * 0.45);
+  // Lines
+  ctx.fillRect(x - w / 2 + w * 0.42, y - h / 2 + 2.5, w * 0.45, 1.2);
+  ctx.fillRect(x - w / 2 + w * 0.42, y - h / 2 + 5.5, w * 0.35, 1.2);
+  ctx.fillRect(x - w / 2 + 2, y + h / 2 - 3, w * 0.75, 1.2);
+  ctx.restore();
+}
+
+function drawCarIcon(ctx, x, y, size, color = "#ffffff") {
+  ctx.save();
+  ctx.fillStyle = color;
+  const w = size * 1.3;
+  // Body & roof
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, y - size * 0.05, w, size * 0.42, 2);
+  ctx.roundRect(x - w * 0.32, y - size * 0.42, w * 0.64, size * 0.4, 2);
+  ctx.fill();
+  // Wheels
+  ctx.fillStyle = "#0f172a";
+  ctx.beginPath();
+  ctx.arc(x - w * 0.28, y + size * 0.35, size * 0.18, 0, Math.PI * 2);
+  ctx.arc(x + w * 0.28, y + size * 0.35, size * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPhoneIcon(ctx, x, y, size, color = "#ffffff") {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.3;
+  const w = size * 0.7;
+  const h = size * 1.2;
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, 2);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y + h * 0.35, 1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawKingpinCrown(ctx, x, y, size, color = "#ffffff") {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x - size * 0.65, y + size * 0.4);
+  ctx.lineTo(x - size * 0.65, y - size * 0.25);
+  ctx.lineTo(x - size * 0.25, y + size * 0.1);
+  ctx.lineTo(x, y - size * 0.55);
+  ctx.lineTo(x + size * 0.25, y + size * 0.1);
+  ctx.lineTo(x + size * 0.65, y - size * 0.25);
+  ctx.lineTo(x + size * 0.65, y + size * 0.4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
 
 export default function SolarSystemGraph({
   data,
@@ -11,24 +98,49 @@ export default function SolarSystemGraph({
 }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
-  const simulationRef = useRef(null);
+  const nodesRef = useRef([]);
+  const linksRef = useRef([]);
   const transformRef = useRef(d3.zoomIdentity);
-  const [hoveredNode, setHoveredNode] = useState(null);
+  const selectedNodeIdRef = useRef(selectedNodeId);
+  const hoveredNodeRef = useRef(null);
+  const renderRef = useRef(null);
 
-  // Color palette
+  const [hoveredNodeState, setHoveredNodeState] = useState(null);
+
+  // Keep selectedNodeId in ref so selection NEVER restarts the physics engine!
+  useEffect(() => {
+    selectedNodeIdRef.current = selectedNodeId;
+    if (renderRef.current) renderRef.current();
+  }, [selectedNodeId]);
+
+  // Color Palette
   const colors = {
     critical: "#dc2626", // Crimson
     high: "#d97706",     // Amber
     medium: "#0284c7",   // Sky
     low: "#059669",      // Emerald
-    sunHalo: "rgba(220, 38, 38, 0.18)",
+    sunGlow: "rgba(220, 38, 38, 0.25)",
     crossHalo: "#7c3aed", // Purple
     edgeCalls: "#0284c7",
     edgeFunds: "#059669",
-    edgeDefault: "#94a3b8"
+    edgeDefault: "#cbd5e1"
   };
 
-  const orbitRadii = [0, 140, 270, 400];
+  const orbitRadii = [0, 150, 280, 420];
+
+  // Deterministic Cosmic Background Stars
+  const stars = useMemo(() => {
+    const starList = [];
+    for (let i = 0; i < 90; i++) {
+      starList.push({
+        x: (Math.sin(i * 997) * 0.5 + 0.5) * 1600 - 300,
+        y: (Math.cos(i * 733) * 0.5 + 0.5) * 1200 - 200,
+        r: (i % 5 === 0) ? 1.5 : (i % 2 === 0 ? 1 : 0.7),
+        alpha: 0.2 + ((i % 10) / 20)
+      });
+    }
+    return starList;
+  }, []);
 
   useEffect(() => {
     if (!data || !data.nodes || data.nodes.length === 0) return;
@@ -49,8 +161,8 @@ export default function SolarSystemGraph({
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr, dpr);
 
-    // Deep clone nodes and edges for D3 mutation
-    const nodes = data.nodes
+    // Filter nodes
+    const filteredNodes = data.nodes
       .filter((n) => {
         if (filterTier !== "all" && n.risk_tier !== filterTier) return false;
         if (filterState !== "all" && n.state !== filterState) return false;
@@ -58,9 +170,9 @@ export default function SolarSystemGraph({
       })
       .map((d) => ({ ...d }));
 
-    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const nodeMap = new Map(filteredNodes.map((n) => [n.id, n]));
 
-    const links = data.edges
+    const filteredLinks = data.edges
       .filter((e) => nodeMap.has(e.source) && nodeMap.has(e.target))
       .map((e) => ({
         ...e,
@@ -68,23 +180,208 @@ export default function SolarSystemGraph({
         target: nodeMap.get(e.target)
       }));
 
-    // Identify Kingpin / Sun node
-    const sunNode = nodes.find((n) => n.orbit_level === 0) || nodes[0];
-    if (sunNode) {
-      sunNode.fx = width / 2;
-      sunNode.fy = height / 2;
+    const cx = width / 2;
+    const cy = height / 2;
+
+    // Arrange nodes into stable, peaceful celestial orbits
+    const orbitGroups = { 0: [], 1: [], 2: [], 3: [] };
+    filteredNodes.forEach((n) => {
+      const lvl = n.orbit_level || 2;
+      orbitGroups[lvl] ? orbitGroups[lvl].push(n) : orbitGroups[2].push(n);
+    });
+
+    // Sun node sits dead center
+    if (orbitGroups[0].length > 0) {
+      orbitGroups[0][0].x = cx;
+      orbitGroups[0][0].y = cy;
+      orbitGroups[0][0].fx = cx;
+      orbitGroups[0][0].fy = cy;
     }
 
-    // Force Simulation
-    const simulation = d3
-      .forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id((d) => d.id).distance((d) => (d.is_cross_jurisdiction ? 120 : 80)))
-      .force("charge", d3.forceManyBody().strength((d) => (d.orbit_level === 0 ? -900 : -280)))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius((d) => (d.radius || 15) + 18))
-      .force("r", d3.forceRadial((d) => orbitRadii[d.orbit_level || 2], width / 2, height / 2).strength(0.65));
+    // Distribute planets on Orbit 1, 2, 3 with fixed angles
+    [1, 2, 3].forEach((lvl) => {
+      const group = orbitGroups[lvl];
+      const radius = orbitRadii[lvl];
+      const total = group.length;
+      group.forEach((node, idx) => {
+        const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
+        node.x = cx + radius * Math.cos(angle);
+        node.y = cy + radius * Math.sin(angle);
+        // Anchor them so they NEVER move like a "touch-me-not plant"!
+        node.fx = node.x;
+        node.fy = node.y;
+      });
+    });
 
-    simulationRef.current = simulation;
+    nodesRef.current = filteredNodes;
+    linksRef.current = filteredLinks;
+
+    // Render Canvas Scene
+    function render() {
+      ctx.save();
+      ctx.clearRect(0, 0, width, height);
+
+      const transform = transformRef.current;
+      ctx.translate(transform.x, transform.y);
+      ctx.scale(transform.k, transform.k);
+
+      // 1. Draw Cosmic Starfield
+      stars.forEach((star) => {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(148, 163, 184, ${star.alpha})`;
+        ctx.fill();
+
+        // 4-point twinkle cross
+        if (star.r > 1.2) {
+          ctx.strokeStyle = `rgba(148, 163, 184, ${star.alpha * 0.6})`;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(star.x - 3, star.y);
+          ctx.lineTo(star.x + 3, star.y);
+          ctx.moveTo(star.x, star.y - 3);
+          ctx.lineTo(star.x, star.y + 3);
+          ctx.stroke();
+        }
+      });
+
+      // 2. Draw Concentric Solar Orbital Tracks
+      orbitRadii.forEach((r, idx) => {
+        if (r === 0) return;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Orbit Labels cleanly placed on top rim
+        ctx.font = "bold 9px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#94a3b8";
+        const label =
+          idx === 1
+            ? "ORBIT I // CORE COMMAND & LIEUTENANTS"
+            : idx === 2
+            ? "ORBIT II // INTERSTATE CONDUITS & ASSETS"
+            : "ORBIT III // PERIPHERY NETWORK";
+        ctx.fillText(label, cx - 140, cy - r - 6);
+      });
+
+      // 3. Draw Links / Constellations
+      linksRef.current.forEach((link) => {
+        ctx.beginPath();
+        ctx.moveTo(link.source.x, link.source.y);
+        ctx.lineTo(link.target.x, link.target.y);
+
+        if (link.type === "TRANSFERRED_FUNDS") {
+          ctx.strokeStyle = colors.edgeFunds;
+          ctx.lineWidth = 2.2;
+          ctx.setLineDash([]);
+        } else if (link.type === "CALLED") {
+          ctx.strokeStyle = colors.edgeCalls;
+          ctx.lineWidth = 1.8;
+          ctx.setLineDash([]);
+        } else {
+          ctx.strokeStyle = colors.edgeDefault;
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([3, 4]);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      // 4. Draw Nodes / Celestial Planets
+      nodesRef.current.forEach((node) => {
+        const isSun = node.orbit_level === 0;
+        const isSelected = selectedNodeIdRef.current === node.id;
+        const isHovered = hoveredNodeRef.current && hoveredNodeRef.current.id === node.id;
+        const radius = isSun ? 32 : node.radius || 15;
+
+        // Radiant Sun Corona Glow
+        if (isSun) {
+          const glowGrad = ctx.createRadialGradient(
+            node.x, node.y, radius * 0.5,
+            node.x, node.y, radius * 2.8
+          );
+          glowGrad.addColorStop(0, "rgba(220, 38, 38, 0.4)");
+          glowGrad.addColorStop(0.5, "rgba(234, 88, 12, 0.15)");
+          glowGrad.addColorStop(1, "rgba(220, 38, 38, 0)");
+
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius * 2.8, 0, 2 * Math.PI);
+          ctx.fillStyle = glowGrad;
+          ctx.fill();
+        }
+
+        // Cross-Jurisdiction Halo
+        if (node.is_cross_jurisdiction) {
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius + 7, 0, 2 * Math.PI);
+          ctx.strokeStyle = colors.crossHalo;
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([2, 2]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Selected Planet Ring
+        if (isSelected) {
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius + 9, 0, 2 * Math.PI);
+          ctx.strokeStyle = "#0f172a";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+
+        // Planet Body
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = colors[node.risk_tier] || colors.medium;
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = isSun ? 3.5 : 2;
+        ctx.stroke();
+
+        // Real Icon inside Planet
+        const iconSize = radius * 0.7;
+        if (isSun) {
+          drawKingpinCrown(ctx, node.x, node.y, iconSize, "#ffffff");
+        } else if (node.details?.vehicles?.length > 0) {
+          drawCarIcon(ctx, node.x, node.y, iconSize, "#ffffff");
+        } else if (node.details?.phones?.length > 0) {
+          drawPhoneIcon(ctx, node.x, node.y, iconSize, "#ffffff");
+        } else {
+          drawPersonIcon(ctx, node.x, node.y, iconSize, "#ffffff");
+        }
+
+        // Node Label
+        ctx.font = isSun
+          ? "bold 13px 'Inter', sans-serif"
+          : "600 11px 'Inter', sans-serif";
+        ctx.textAlign = "center";
+
+        // White shadow for legibility
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3.5;
+        ctx.strokeText(node.name, node.x, node.y + radius + 15);
+
+        ctx.fillStyle = isSun ? "#991b1b" : "#0f172a";
+        ctx.fillText(node.name, node.x, node.y + radius + 15);
+
+        // Tagline under Kingpin
+        if (isSun) {
+          ctx.font = "bold 9px 'JetBrains Mono', monospace";
+          ctx.fillStyle = "#dc2626";
+          ctx.fillText("[KINGPIN // SUN]", node.x, node.y + radius + 27);
+        }
+      });
+
+      ctx.restore();
+    }
+
+    renderRef.current = render;
+    render();
 
     // Zoom setup
     const zoom = d3
@@ -97,153 +394,15 @@ export default function SolarSystemGraph({
 
     d3.select(canvas).call(zoom);
 
-    // Initial render function
-    function render() {
-      ctx.save();
-      ctx.clearRect(0, 0, width, height);
-
-      const transform = transformRef.current;
-      ctx.translate(transform.x, transform.y);
-      ctx.scale(transform.k, transform.k);
-
-      const cx = width / 2;
-      const cy = height / 2;
-
-      // 1. Draw Concentric Solar Orbital Rings
-      ctx.save();
-      orbitRadii.forEach((r, idx) => {
-        if (r === 0) return;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.strokeStyle = "#cbd5e1";
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 6]);
-        ctx.stroke();
-
-        // Orbit labels
-        ctx.font = "10px 'JetBrains Mono', monospace";
-        ctx.fillStyle = "#94a3b8";
-        ctx.setLineDash([]);
-        const label =
-          idx === 1
-            ? "ORBIT 1 // LIEUTENANTS & COMMAND"
-            : idx === 2
-            ? "ORBIT 2 // OPERATIVES & CONDUITS"
-            : "ORBIT 3 // PERIPHERY NETWORK";
-        ctx.fillText(label, cx - r + 8, cy - 6);
-      });
-      ctx.restore();
-
-      // 2. Draw Edges
-      links.forEach((link) => {
-        ctx.beginPath();
-        ctx.moveTo(link.source.x, link.source.y);
-        ctx.lineTo(link.target.x, link.target.y);
-
-        if (link.type === "TRANSFERRED_FUNDS") {
-          ctx.strokeStyle = colors.edgeFunds;
-          ctx.lineWidth = Math.min(3.5, 1.2 + (link.weight || 1));
-          ctx.setLineDash([]);
-        } else if (link.type === "CALLED") {
-          ctx.strokeStyle = colors.edgeCalls;
-          ctx.lineWidth = 1.8;
-          ctx.setLineDash([]);
-        } else {
-          ctx.strokeStyle = colors.edgeDefault;
-          ctx.lineWidth = 1.2;
-          ctx.setLineDash([3, 3]);
-        }
-        ctx.stroke();
-      });
-      ctx.setLineDash([]);
-
-      // 3. Draw Nodes
-      nodes.forEach((node) => {
-        const isSun = node.orbit_level === 0;
-        const isSelected = selectedNodeId === node.id;
-        const isHovered = hoveredNode && hoveredNode.id === node.id;
-        const radius = isSun ? 30 : node.radius || 14;
-
-        // Radiant glow for Sun Kingpin
-        if (isSun) {
-          const gradient = ctx.createRadialGradient(
-            node.x, node.y, radius * 0.4,
-            node.x, node.y, radius * 2.2
-          );
-          gradient.addColorStop(0, "rgba(220, 38, 38, 0.45)");
-          gradient.addColorStop(0.6, "rgba(220, 38, 38, 0.15)");
-          gradient.addColorStop(1, "rgba(220, 38, 38, 0)");
-          ctx.beginPath();
-          ctx.arc(node.x, node.y, radius * 2.2, 0, 2 * Math.PI);
-          ctx.fillStyle = gradient;
-          ctx.fill();
-        }
-
-        // Purple halo for cross-jurisdiction entities
-        if (node.is_cross_jurisdiction) {
-          ctx.beginPath();
-          ctx.arc(node.x, node.y, radius + 7, 0, 2 * Math.PI);
-          ctx.strokeStyle = colors.crossHalo;
-          ctx.lineWidth = 2.5;
-          ctx.setLineDash([2, 2]);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-
-        // Selected halo indicator
-        if (isSelected) {
-          ctx.beginPath();
-          ctx.arc(node.x, node.y, radius + 9, 0, 2 * Math.PI);
-          ctx.strokeStyle = "#0f172a";
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-        }
-
-        // Core Node Body
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = colors[node.risk_tier] || colors.medium;
-        ctx.fill();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = isSun ? 3.5 : 2;
-        ctx.stroke();
-
-        // Node Label
-        ctx.font = isSun
-          ? "bold 13px 'Inter', sans-serif"
-          : "500 11px 'Inter', sans-serif";
-        ctx.textAlign = "center";
-        
-        // Shadow outline for label legibility
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 3.5;
-        ctx.strokeText(node.name, node.x, node.y + radius + 15);
-
-        ctx.fillStyle = isSun ? "#991b1b" : "#0f172a";
-        ctx.fillText(node.name, node.x, node.y + radius + 15);
-
-        // Subtitle tag for Kingpin
-        if (isSun) {
-          ctx.font = "bold 9px 'JetBrains Mono', monospace";
-          ctx.fillStyle = "#dc2626";
-          ctx.fillText("[KINGPIN // SUN]", node.x, node.y + radius + 27);
-        }
-      });
-
-      ctx.restore();
-    }
-
-    simulation.on("tick", render);
-
-    // Mouse Interaction for Hover and Click
+    // Hit Testing
     function getNodeAt(x, y) {
       const transform = transformRef.current;
       const tx = (x - transform.x) / transform.k;
       const ty = (y - transform.y) / transform.k;
 
-      for (let i = nodes.length - 1; i >= 0; i--) {
-        const n = nodes[i];
-        const r = (n.orbit_level === 0 ? 30 : n.radius || 14) + 6;
+      for (let i = nodesRef.current.length - 1; i >= 0; i--) {
+        const n = nodesRef.current[i];
+        const r = (n.orbit_level === 0 ? 32 : n.radius || 15) + 6;
         const dx = tx - n.x;
         const dy = ty - n.y;
         if (dx * dx + dy * dy <= r * r) {
@@ -257,14 +416,16 @@ export default function SolarSystemGraph({
       const rect = canvas.getBoundingClientRect();
       const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
       canvas.style.cursor = node ? "pointer" : "default";
-      setHoveredNode(node);
+      hoveredNodeRef.current = node;
+      setHoveredNodeState(node);
+      render();
     };
 
     const handleClick = (e) => {
       const rect = canvas.getBoundingClientRect();
       const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
       if (node && onSelectNode) {
-        onSelectNode(node.id);
+        onSelectNode(node.id); // Triggers drawer, but NO physics restart!
       }
     };
 
@@ -272,29 +433,22 @@ export default function SolarSystemGraph({
     canvas.addEventListener("click", handleClick);
 
     return () => {
-      simulation.stop();
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("click", handleClick);
     };
-  }, [data, selectedNodeId, filterState, filterTier]);
+  }, [data, filterState, filterTier]); // NOTICE: selectedNodeId removed from deps to eliminate jumping!
 
   // Controls
   const handleZoom = (factor) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    d3.select(canvas)
-      .transition()
-      .duration(250)
-      .call(d3.zoom().scaleBy, factor);
+    d3.select(canvas).transition().duration(250).call(d3.zoom().scaleBy, factor);
   };
 
   const handleReset = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    d3.select(canvas)
-      .transition()
-      .duration(400)
-      .call(d3.zoom().transform, d3.zoomIdentity);
+    d3.select(canvas).transition().duration(400).call(d3.zoom().transform, d3.zoomIdentity);
   };
 
   return (
@@ -326,39 +480,44 @@ export default function SolarSystemGraph({
         </button>
       </div>
 
-      {/* Legend Card */}
-      <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-sm text-xs text-slate-600 flex items-center gap-4 z-10">
+      {/* Legend Card with Real Icon Guide */}
+      <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm text-xs text-slate-600 flex items-center gap-5 z-10">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-red-600"></span>
-          <span className="font-medium text-slate-800">Critical (Sun)</span>
+          <span className="font-semibold text-slate-900">Sun (Kingpin)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-          <span>High Risk</span>
+          <span>Lieutenant</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-sky-600"></span>
-          <span>Medium</span>
+          <span>Operative</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3.5 h-3.5 rounded-full border-2 border-purple-600 border-dashed"></span>
-          <span className="text-purple-700 font-medium">Cross-State Halo</span>
+          <span className="text-purple-700 font-semibold">Multi-State Halo</span>
         </div>
       </div>
 
-      {/* Hover Card Tooltip */}
-      {hoveredNode && (
+      {/* Hover Tooltip Card */}
+      {hoveredNodeState && (
         <div
-          className="absolute pointer-events-none bg-slate-900/95 text-white px-3 py-2 rounded-lg shadow-xl text-xs z-20 backdrop-blur"
-          style={{ bottom: 16, left: 16 }}
+          className="absolute pointer-events-none bg-slate-900/95 text-white px-3.5 py-2.5 rounded-xl shadow-2xl text-xs z-20 backdrop-blur border border-slate-700"
+          style={{ bottom: 20, left: 20 }}
         >
-          <div className="font-semibold text-sm">{hoveredNode.name}</div>
+          <div className="font-bold text-sm text-white">{hoveredNodeState.name}</div>
           <div className="text-slate-400 font-mono text-[11px] mt-0.5">
-            Jurisdiction: {hoveredNode.state} | Risk: {hoveredNode.risk_score}/100
+            Jurisdiction: {hoveredNodeState.state} • Risk Score: {hoveredNodeState.risk_score}/100
           </div>
-          {hoveredNode.details?.phones?.length > 0 && (
-            <div className="text-emerald-400 font-mono text-[10px] mt-1">
-              MSISDN: {hoveredNode.details.phones[0]}
+          {hoveredNodeState.details?.phones?.length > 0 && (
+            <div className="text-sky-400 font-mono text-[11px] mt-1">
+              MSISDN: {hoveredNodeState.details.phones[0]}
+            </div>
+          )}
+          {hoveredNodeState.details?.vehicles?.length > 0 && (
+            <div className="text-amber-400 font-mono text-[11px]">
+              Reg: {hoveredNodeState.details.vehicles[0]}
             </div>
           )}
         </div>
