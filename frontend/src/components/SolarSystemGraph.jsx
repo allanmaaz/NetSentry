@@ -94,7 +94,9 @@ export default function SolarSystemGraph({
   selectedNodeId,
   onSelectNode,
   filterState,
-  filterTier
+  filterTier,
+  neutralizedNodeId = null,
+  timeProgress = 100
 }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -102,6 +104,8 @@ export default function SolarSystemGraph({
   const linksRef = useRef([]);
   const transformRef = useRef(d3.zoomIdentity);
   const selectedNodeIdRef = useRef(selectedNodeId);
+  const neutralizedNodeIdRef = useRef(neutralizedNodeId);
+  const timeProgressRef = useRef(timeProgress);
   const hoveredNodeRef = useRef(null);
   const renderRef = useRef(null);
 
@@ -112,6 +116,17 @@ export default function SolarSystemGraph({
     selectedNodeIdRef.current = selectedNodeId;
     if (renderRef.current) renderRef.current();
   }, [selectedNodeId]);
+
+  useEffect(() => {
+    neutralizedNodeIdRef.current = neutralizedNodeId;
+    if (renderRef.current) renderRef.current();
+  }, [neutralizedNodeId]);
+
+  useEffect(() => {
+    timeProgressRef.current = timeProgress;
+    if (renderRef.current) renderRef.current();
+  }, [timeProgress]);
+
 
   // Color Palette
   const colors = {
@@ -268,8 +283,20 @@ export default function SolarSystemGraph({
         ctx.fillText(label, cx - 140, cy - r - 6);
       });
 
+      function isNodeVisible(node) {
+        const prog = timeProgressRef.current;
+        if (prog === undefined || prog === null || prog >= 95) return true;
+        const orbit = node.orbit_level ?? 2;
+        if (orbit === 0) return true;
+        if (orbit === 1) return prog >= 20;
+        if (orbit === 2) return prog >= 50;
+        return prog >= 75;
+      }
+
       // 3. Draw Links / Constellations
       linksRef.current.forEach((link) => {
+        if (!isNodeVisible(link.source) || !isNodeVisible(link.target)) return;
+
         ctx.beginPath();
         ctx.moveTo(link.source.x, link.source.y);
         ctx.lineTo(link.target.x, link.target.y);
@@ -293,6 +320,8 @@ export default function SolarSystemGraph({
 
       // 4. Draw Nodes / Celestial Planets
       nodesRef.current.forEach((node) => {
+        if (!isNodeVisible(node)) return;
+
         const isSun = node.orbit_level === 0;
         const isSelected = selectedNodeIdRef.current === node.id;
         const isHovered = hoveredNodeRef.current && hoveredNodeRef.current.id === node.id;
@@ -355,6 +384,33 @@ export default function SolarSystemGraph({
           drawPersonIcon(ctx, node.x, node.y, iconSize, "#ffffff");
         }
 
+        // Neutralized / Arrested Indicator
+        if (node.id === neutralizedNodeIdRef.current) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius + 8, 0, 2 * Math.PI);
+          ctx.strokeStyle = "#dc2626";
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([4, 3]);
+          ctx.stroke();
+
+          // Red X strike
+          ctx.beginPath();
+          ctx.moveTo(node.x - radius * 0.6, node.y - radius * 0.6);
+          ctx.lineTo(node.x + radius * 0.6, node.y + radius * 0.6);
+          ctx.moveTo(node.x + radius * 0.6, node.y - radius * 0.6);
+          ctx.lineTo(node.x - radius * 0.6, node.y + radius * 0.6);
+          ctx.strokeStyle = "#dc2626";
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          ctx.font = "bold 9px 'JetBrains Mono', monospace";
+          ctx.fillStyle = "#dc2626";
+          ctx.textAlign = "center";
+          ctx.fillText("[ARRESTED // NEUTRALIZED]", node.x, node.y - radius - 8);
+          ctx.restore();
+        }
+
         // Node Label
         ctx.font = isSun
           ? "bold 13px 'Inter', sans-serif"
@@ -400,8 +456,19 @@ export default function SolarSystemGraph({
       const tx = (x - transform.x) / transform.k;
       const ty = (y - transform.y) / transform.k;
 
+      const prog = timeProgressRef.current;
+      const isVisible = (node) => {
+        if (prog === undefined || prog === null || prog >= 95) return true;
+        const orbit = node.orbit_level ?? 2;
+        if (orbit === 0) return true;
+        if (orbit === 1) return prog >= 20;
+        if (orbit === 2) return prog >= 50;
+        return prog >= 75;
+      };
+
       for (let i = nodesRef.current.length - 1; i >= 0; i--) {
         const n = nodesRef.current[i];
+        if (!isVisible(n)) continue;
         const r = (n.orbit_level === 0 ? 32 : n.radius || 15) + 6;
         const dx = tx - n.x;
         const dy = ty - n.y;

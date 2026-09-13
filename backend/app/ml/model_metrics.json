@@ -1,0 +1,107 @@
+{
+  "model_name": "NetSentry Indic Entity Linkage Engine v1.0",
+  "algorithm": "Supervised Random Forest Classifier",
+  "training_samples": 3750,
+  "test_samples": 1250,
+  "metrics": {
+    "accuracy": 99.36,
+    "precision": 98.9,
+    "recall": 99.84,
+    "f1_score": 99.37,
+    "roc_auc": 99.99
+  },
+  "confusion_matrix": {
+    "true_positive": 630,
+    "false_positive": 7,
+    "true_negative": 612,
+    "false_negative": 1
+  },
+  "feature_importances": [
+    {
+      "feature": "Token Set Overlap",
+      "weight": 37.9
+    },
+    {
+      "feature": "Levenshtein Edit Distance",
+      "weight": 21.5
+    },
+    {
+      "feature": "Double Metaphone Phonetic",
+      "weight": 19.1
+    },
+    {
+      "feature": "Shared Telecom MSISDN",
+      "weight": 13.1
+    },
+    {
+      "feature": "Shared Vehicle Plate",
+      "weight": 5.5
+    },
+    {
+      "feature": "Shared Bank Account",
+      "weight": 2.8
+    }
+  ],
+  "roc_curve": [
+    {
+      "fpr": 0.0,
+      "tpr": 0.0
+    },
+    {
+      "fpr": 0.0,
+      "tpr": 0.702
+    },
+    {
+      "fpr": 0.0,
+      "tpr": 0.769
+    },
+    {
+      "fpr": 0.0,
+      "tpr": 0.818
+    },
+    {
+      "fpr": 0.0,
+      "tpr": 0.854
+    },
+    {
+      "fpr": 0.0,
+      "tpr": 0.876
+    },
+    {
+      "fpr": 0.0,
+      "tpr": 0.913
+    },
+    {
+      "fpr": 0.0,
+      "tpr": 0.965
+    },
+    {
+      "fpr": 0.003,
+      "tpr": 0.992
+    },
+    {
+      "fpr": 0.031,
+      "tpr": 1.0
+    },
+    {
+      "fpr": 0.079,
+      "tpr": 1.0
+    },
+    {
+      "fpr": 0.129,
+      "tpr": 1.0
+    },
+    {
+      "fpr": 0.174,
+      "tpr": 1.0
+    },
+    {
+      "fpr": 0.226,
+      "tpr": 1.0
+    },
+    {
+      "fpr": 1.0,
+      "tpr": 1.0
+    }
+  ]
+}

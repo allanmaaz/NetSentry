@@ -16,7 +16,8 @@ export default function InspectorDrawer({
   entity,
   isOpen,
   onClose,
-  onOpenDossier
+  onOpenDossier,
+  onSimulateArrest
 }) {
   if (!isOpen || !entity) return null;
 
@@ -209,12 +210,19 @@ export default function InspectorDrawer({
       </div>
 
       {/* Action Footer */}
-      <div className="p-4 border-t border-slate-200 bg-slate-50/70">
+      <div className="p-4 border-t border-slate-200 bg-slate-50/70 space-y-2">
+        <button
+          onClick={() => onSimulateArrest && onSimulateArrest(entity.id)}
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm"
+        >
+          <ShieldAlert size={14} />
+          Simulate Arrest (Tactical Impact)
+        </button>
         <button
           onClick={() => onOpenDossier(entity)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition shadow-sm"
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition shadow-sm"
         >
-          <FileText size={15} />
+          <FileText size={14} />
           Export Court Dossier (Section 65B)
         </button>
       </div>

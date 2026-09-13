@@ -4,12 +4,17 @@ import SolarSystemGraph from "./components/SolarSystemGraph";
 import InspectorDrawer from "./components/InspectorDrawer";
 import HITLReviewQueue from "./components/HITLReviewQueue";
 import DossierModal from "./components/DossierModal";
+import TimelinePlayer from "./components/TimelinePlayer";
+import TacticalSimModal from "./components/TacticalSimModal";
+import LiveIngestModal from "./components/LiveIngestModal";
+import ModelMetricsModal from "./components/ModelMetricsModal";
 import {
   fetchGraph,
   fetchEntityDetail,
   fetchPendingResolutions,
   submitResolutionDecision,
-  reloadDatasets
+  reloadDatasets,
+  simulateArrest
 } from "./services/api";
 
 export default function App() {
@@ -20,6 +25,14 @@ export default function App() {
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
   const [dossierEntity, setDossierEntity] = useState(null);
+
+  // New High-Impact Tactical Features
+  const [isTacticalModalOpen, setIsTacticalModalOpen] = useState(false);
+  const [tacticalResult, setTacticalResult] = useState(null);
+  const [neutralizedNodeId, setNeutralizedNodeId] = useState(null);
+  const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
+  const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
+  const [timelineProgress, setTimelineProgress] = useState(100);
 
   const [filterState, setFilterState] = useState("all");
   const [filterTier, setFilterTier] = useState("all");
@@ -95,6 +108,7 @@ export default function App() {
   const handleReload = async () => {
     try {
       await reloadDatasets();
+      setNeutralizedNodeId(null);
       showToast("Datasets regenerated! Deccan-Konkan syndicate reset.");
       await loadData();
     } catch (err) {
@@ -108,16 +122,63 @@ export default function App() {
     setIsDossierOpen(true);
   };
 
+  const handleSimulateArrest = async (nodeId) => {
+    try {
+      showToast("Running Network Fragmentation Graph Analysis...");
+      const sim = await simulateArrest(nodeId);
+      setTacticalResult(sim);
+      setIsTacticalModalOpen(true);
+    } catch (err) {
+      console.error("Failed to simulate arrest:", err);
+      showToast("Arrest simulation failed.");
+    }
+  };
+
+  const handleApplyNeutralize = (nodeId) => {
+    setNeutralizedNodeId(nodeId);
+    setIsTacticalModalOpen(false);
+    showToast(`Tactical neutralization confirmed: Target marked as ARRESTED. Network routes severed.`);
+  };
+
+  const handleIngestSuccess = (newNode) => {
+    if (!newNode) return;
+    setGraphData((prev) => {
+      if (!prev) return prev;
+      const exists = prev.nodes.some((n) => n.id === newNode.id);
+      if (exists) return prev;
+      return {
+        ...prev,
+        nodes: [...prev.nodes, newNode],
+        edges: [
+          ...prev.edges,
+          {
+            source: newNode.id,
+            target: "person_mohd_aslam",
+            type: "CALLED",
+            weight: 2.0,
+            label: "Intercepted Call"
+          }
+        ]
+      };
+    });
+    handleSelectNode(newNode.id);
+    showToast(`Live FIR narrative ingested: '${newNode.name}' spawned in solar orbit.`);
+  };
+
   return (
     <div className="flex flex-col w-screen h-screen overflow-hidden bg-slate-100 select-none">
       {/* Top Header */}
       <Header
+        nodes={graphData?.nodes || []}
         stats={graphData?.stats}
+        onSelectNode={handleSelectNode}
         filterState={filterState}
         onFilterStateChange={setFilterState}
         filterTier={filterTier}
         onFilterTierChange={setFilterTier}
         onReloadData={handleReload}
+        onOpenIngest={() => setIsIngestModalOpen(true)}
+        onOpenMetrics={() => setIsMetricsModalOpen(true)}
         isLoading={isLoading}
       />
 
@@ -134,8 +195,13 @@ export default function App() {
             onSelectNode={handleSelectNode}
             filterState={filterState}
             filterTier={filterTier}
+            neutralizedNodeId={neutralizedNodeId}
+            timeProgress={timelineProgress}
           />
         )}
+
+        {/* Temporal Timeline Playback Scrubber */}
+        <TimelinePlayer onTimeChange={(val) => setTimelineProgress(val)} />
 
         {/* Right Inspector Drawer */}
         <InspectorDrawer
@@ -143,6 +209,7 @@ export default function App() {
           isOpen={isInspectorOpen}
           onClose={() => setIsInspectorOpen(false)}
           onOpenDossier={handleOpenDossier}
+          onSimulateArrest={handleSimulateArrest}
         />
 
         {/* Bottom HITL Review Queue */}
@@ -160,12 +227,35 @@ export default function App() {
         )}
       </main>
 
-      {/* Section 65B Dossier Modal */}
+      {/* Section 65B Court Dossier Modal */}
       <DossierModal
         entity={dossierEntity}
         isOpen={isDossierOpen}
         onClose={() => setIsDossierOpen(false)}
       />
+
+      {/* Tactical Arrest Impact Modal */}
+      <TacticalSimModal
+        result={tacticalResult}
+        isOpen={isTacticalModalOpen}
+        onClose={() => setIsTacticalModalOpen(false)}
+        onApplyNeutralize={handleApplyNeutralize}
+        isNeutralized={neutralizedNodeId === tacticalResult?.neutralized_target?.id}
+      />
+
+      {/* Live FIR Narrative Ingestion Modal */}
+      <LiveIngestModal
+        isOpen={isIngestModalOpen}
+        onClose={() => setIsIngestModalOpen(false)}
+        onIngestSuccess={handleIngestSuccess}
+      />
+
+      {/* AI Model Evaluation & Training Metrics Modal */}
+      <ModelMetricsModal
+        isOpen={isMetricsModalOpen}
+        onClose={() => setIsMetricsModalOpen(false)}
+      />
     </div>
   );
 }
+

@@ -1,8 +1,10 @@
 # Environments & Dependencies
 backend/venv/
 backend/.venv/
+backend/cloudflared
 frontend/node_modules/
 frontend/dist/
+
 
 # Python Cache & Bytecode
 __pycache__/
