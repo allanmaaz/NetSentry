@@ -234,8 +234,8 @@ To securely expose the local FastAPI server to Cloudflare without opening router
 
 ## 👥 Contributors & Collaboration
 
-* **Lead Architect**: Allan Maaz ([@allanmaaz](https://github.com/allanmaaz))
-* **Collaborator**: Meer Mohammed Shoaib ([@meer-md-shoaib](https://github.com/meer-md-shoaib))
+* **Lead Architects**: Allan Maaz ([@allanmaaz](https://github.com/allanmaaz)) & Meer Mohammed Shoaib ([@meer-md-shoaib](https://github.com/meer-md-shoaib))
+* **Collaborator**: 
 
 Pull requests, issues, and security reviews are welcomed! Please read our [Contribution Guidelines](CONTRIBUTING.md) before submitting.
 
