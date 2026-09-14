@@ -10,6 +10,68 @@ let currentGraph = JSON.parse(JSON.stringify(MOCK_GRAPH));
 let currentPending = JSON.parse(JSON.stringify(MOCK_PENDING));
 let currentDetails = JSON.parse(JSON.stringify(MOCK_DETAILS));
 
+export function getAuthToken() {
+  return localStorage.getItem("netsentry_jwt_token") || "";
+}
+
+export function setAuthToken(token) {
+  if (token) localStorage.setItem("netsentry_jwt_token", token);
+  else localStorage.removeItem("netsentry_jwt_token");
+}
+
+export function getStoredOfficer() {
+  const data = localStorage.getItem("netsentry_officer");
+  if (data) {
+    try {
+      return JSON.parse(data);
+    } catch (e) {}
+  }
+  return null;
+}
+
+export function setStoredOfficer(officer) {
+  if (officer) localStorage.setItem("netsentry_officer", JSON.stringify(officer));
+  else localStorage.removeItem("netsentry_officer");
+}
+
+export function getAuthHeaders(extraHeaders = {}) {
+  const token = getAuthToken();
+  const headers = { ...extraHeaders };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+export async function loginOfficer(badgeId, pin = "1234") {
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ badge_id: badgeId, pin })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setAuthToken(data.access_token);
+      setStoredOfficer(data.officer);
+      return data;
+    }
+  } catch (err) {
+    // offline fallback
+  }
+  return null;
+}
+
+export async function fetchDemoOfficers() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/officers`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    // offline fallback
+  }
+  return null;
+}
+
 export async function fetchGraph() {
   try {
     const controller = new AbortController();
@@ -81,11 +143,10 @@ export async function submitResolutionDecision(candidateId, action, notes = "") 
   try {
     const res = await fetch(`${API_BASE}/resolve/decision`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         candidate_id: candidateId,
         action: action,
-        officer_id: "OFFICER-MH-881",
         notes: notes
       })
     });
@@ -117,7 +178,10 @@ export async function submitResolutionDecision(candidateId, action, notes = "") 
 
 export async function reloadDatasets() {
   try {
-    const res = await fetch(`${API_BASE}/ingest/reload`, { method: "POST" });
+    const res = await fetch(`${API_BASE}/ingest/reload`, {
+      method: "POST",
+      headers: getAuthHeaders()
+    });
     if (res.ok) return await res.json();
   } catch (err) {
     // Resilient fallback
@@ -130,7 +194,7 @@ export async function reloadDatasets() {
 export async function uploadCsvText(csvText) {
   const res = await fetch(`${API_BASE}/ingest/upload-csv`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: getAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ csv_text: csvText })
   });
   if (!res.ok) {
@@ -144,6 +208,7 @@ export async function uploadCsvFile(file) {
   formData.append("file", file);
   const res = await fetch(`${API_BASE}/ingest/upload-file`, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: formData
   });
   if (!res.ok) {

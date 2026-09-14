@@ -1,7 +1,8 @@
 from fastapi import APIRouter
-from backend.app.api.v1.endpoints import graph, entities, resolution, ingestion, analytics
+from backend.app.api.v1.endpoints import graph, entities, resolution, ingestion, analytics, auth
 
 api_router = APIRouter()
+api_router.include_router(auth.router, prefix="/auth", tags=["Authentication & RBAC"])
 api_router.include_router(graph.router, prefix="/graph", tags=["Graph"])
 api_router.include_router(entities.router, prefix="/entities", tags=["Entities"])
 api_router.include_router(resolution.router, prefix="/resolve", tags=["Resolution"])

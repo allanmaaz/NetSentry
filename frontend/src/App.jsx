@@ -10,16 +10,24 @@ import TacticalSimModal from "./components/TacticalSimModal";
 import LiveIngestModal from "./components/LiveIngestModal";
 import ModelMetricsModal from "./components/ModelMetricsModal";
 import UploadDatasetModal from "./components/UploadDatasetModal";
+import AuthModal, { DEMO_OFFICERS } from "./components/AuthModal";
+import LoginPage from "./components/LoginPage";
 import {
   fetchGraph,
   fetchEntityDetail,
   fetchPendingResolutions,
   submitResolutionDecision,
   reloadDatasets,
-  simulateArrest
+  simulateArrest,
+  getStoredOfficer,
+  setStoredOfficer,
+  setAuthToken
 } from "./services/api";
 
 export default function App() {
+  const [currentOfficer, setCurrentOfficer] = useState(() => getStoredOfficer() || null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!getStoredOfficer());
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [graphData, setGraphData] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [entityDetail, setEntityDetail] = useState(null);
@@ -150,6 +158,31 @@ export default function App() {
     showToast(`Live FIR narrative ingested: '${newNode.name}' committed to database.`);
   };
 
+  const handleLoginSuccess = (officer) => {
+    setCurrentOfficer(officer);
+    setStoredOfficer(officer);
+    setIsAuthenticated(true);
+    showToast(`Grid Access Authorized: ${officer.rank} ${officer.name}`);
+  };
+
+  const handleLogout = () => {
+    setStoredOfficer(null);
+    setAuthToken("");
+    setCurrentOfficer(null);
+    setIsAuthenticated(false);
+  };
+
+  const handleSelectOfficer = (officer) => {
+    setCurrentOfficer(officer);
+    setStoredOfficer(officer);
+    showToast(`Active Officer: ${officer.rank} ${officer.name} (${officer.role})`);
+  };
+
+  // If not authenticated, present the full-screen Law Enforcement Login Portal
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="flex flex-col w-screen h-screen overflow-hidden bg-slate-100 select-none">
       {/* Top Header */}
@@ -168,6 +201,9 @@ export default function App() {
         isLoading={isLoading}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        currentOfficer={currentOfficer}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Solar System Graph Workspace */}
@@ -216,6 +252,8 @@ export default function App() {
             candidates={pendingResolutions}
             onResolve={handleResolve}
             isProcessing={isLoading}
+            currentOfficer={currentOfficer}
+            onOpenAuthModal={() => setIsAuthModalOpen(true)}
           />
         </div>
 
@@ -282,6 +320,14 @@ export default function App() {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUploadSuccess={loadData}
+      />
+
+      {/* Sovereign Officer Authentication & RBAC Switcher Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentOfficer={currentOfficer}
+        onSelectOfficer={handleSelectOfficer}
       />
     </div>
   );

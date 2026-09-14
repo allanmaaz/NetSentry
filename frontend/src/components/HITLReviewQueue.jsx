@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Check, X, ChevronUp, ChevronDown, Sparkles, Phone, ShieldCheck } from "lucide-react";
+import { Check, X, ChevronUp, ChevronDown, Sparkles, Phone, ShieldCheck, Lock } from "lucide-react";
 
 export default function HITLReviewQueue({
   candidates,
   onResolve,
-  isProcessing
+  isProcessing,
+  currentOfficer,
+  onOpenAuthModal
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -97,20 +99,31 @@ export default function HITLReviewQueue({
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onResolve(cand.candidate_id, "MERGE")}
-                      disabled={isProcessing}
-                      title="Confirm Entity Merge"
-                      className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition shadow-sm disabled:opacity-50"
-                    >
-                      <Check size={14} />
-                      Confirm Merge
-                    </button>
+                    {currentOfficer?.role === "FIELD_INVESTIGATOR" ? (
+                      <button
+                        onClick={onOpenAuthModal}
+                        title="Restricted: Requires Station Admin or Super Admin role. Click to switch persona."
+                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 border border-slate-200 text-slate-500 rounded-xl font-mono text-[11px] font-bold transition shadow-xs cursor-pointer"
+                      >
+                        <Lock size={13} className="text-amber-500" />
+                        <span>Admin Clearance Req.</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onResolve(cand.candidate_id, "MERGE")}
+                        disabled={isProcessing}
+                        title="Confirm Entity Merge"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition shadow-sm disabled:opacity-50 cursor-pointer"
+                      >
+                        <Check size={14} />
+                        Confirm Merge
+                      </button>
+                    )}
                     <button
                       onClick={() => onResolve(cand.candidate_id, "REJECT")}
-                      disabled={isProcessing}
+                      disabled={isProcessing || currentOfficer?.role === "FIELD_INVESTIGATOR"}
                       title="Reject and Flag as Separate Entities"
-                      className="p-2 border border-slate-300 hover:bg-slate-100 text-slate-600 rounded-xl transition disabled:opacity-50"
+                      className="p-2 border border-slate-300 hover:bg-slate-100 text-slate-600 rounded-xl transition disabled:opacity-50 cursor-pointer"
                     >
                       <X size={14} />
                     </button>
