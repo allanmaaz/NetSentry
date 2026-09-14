@@ -1,5 +1,5 @@
 import React from "react";
-import { Shield, RefreshCw, Cpu, PlusCircle, UploadCloud } from "lucide-react";
+import { Shield, RefreshCw, Cpu, PlusCircle, UploadCloud, Orbit, Box } from "lucide-react";
 import GlobalSearchBar from "./GlobalSearchBar";
 
 export default function Header({
@@ -14,7 +14,9 @@ export default function Header({
   onOpenIngest,
   onOpenMetrics,
   onOpenUploadCsv,
-  isLoading
+  isLoading,
+  viewMode = "2d",
+  onViewModeChange
 }) {
   const kingpinNode = nodes?.find((n) => n.orbit_level === 0) || nodes?.[0];
   const kingpinName = kingpinNode?.name || "Abdul Karim Telgi";
@@ -69,6 +71,34 @@ export default function Header({
 
       {/* Action Buttons & Filters */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* 2D / 3D Engine View Mode Toggle */}
+        <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          <button
+            onClick={() => onViewModeChange && onViewModeChange("2d")}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+              viewMode === "2d"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+            title="Switch to 2D Solar System View"
+          >
+            <Orbit size={13} className={viewMode === "2d" ? "text-amber-500" : ""} />
+            <span>2D Solar</span>
+          </button>
+          <button
+            onClick={() => onViewModeChange && onViewModeChange("3d")}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+              viewMode === "3d"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+            title="Switch to 3D Galactic WebGL Universe"
+          >
+            <Box size={13} className={viewMode === "3d" ? "text-sky-500" : ""} />
+            <span>3D Galaxy</span>
+          </button>
+        </div>
+
         {/* State Filter */}
         <select
           value={filterState}

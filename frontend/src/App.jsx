@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Header from "./components/Header";
 import SolarSystemGraph from "./components/SolarSystemGraph";
+import Galaxy3DGraph from "./components/Galaxy3DGraph";
 import InspectorDrawer from "./components/InspectorDrawer";
 import HITLReviewQueue from "./components/HITLReviewQueue";
 import DossierModal from "./components/DossierModal";
@@ -35,6 +36,7 @@ export default function App() {
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [timelineProgress, setTimelineProgress] = useState(100);
+  const [viewMode, setViewMode] = useState("2d"); // "2d" | "3d"
 
   const [filterState, setFilterState] = useState("all");
   const [filterTier, setFilterTier] = useState("all");
@@ -164,6 +166,8 @@ export default function App() {
         onOpenMetrics={() => setIsMetricsModalOpen(true)}
         onOpenUploadCsv={() => setIsUploadModalOpen(true)}
         isLoading={isLoading}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {/* Main Solar System Graph Workspace */}
@@ -172,6 +176,16 @@ export default function App() {
           <div className="flex items-center justify-center w-full h-full text-slate-500 font-mono text-sm">
             Connecting to NetSentry Intelligence Database...
           </div>
+        ) : viewMode === "3d" ? (
+          <Galaxy3DGraph
+            data={graphData}
+            selectedNodeId={selectedNodeId}
+            onSelectNode={handleSelectNode}
+            filterState={filterState}
+            filterTier={filterTier}
+            neutralizedNodeId={neutralizedNodeId}
+            timeProgress={timelineProgress}
+          />
         ) : (
           <SolarSystemGraph
             data={graphData}

@@ -24,3 +24,6 @@ __pycache__/
 *.pem
 *.key
 credentials.json
+
+# Local Client Engine
+client_engine/
