@@ -1,5 +1,5 @@
 import React from "react";
-import { Shield, RefreshCw, Cpu, PlusCircle, UploadCloud, Orbit, Box, UserCheck, LogOut } from "lucide-react";
+import { Shield, RefreshCw, Cpu, PlusCircle, UploadCloud, Orbit, Box, UserCheck, LogOut, Database } from "lucide-react";
 import GlobalSearchBar from "./GlobalSearchBar";
 
 export default function Header({
@@ -19,7 +19,8 @@ export default function Header({
   onViewModeChange,
   currentOfficer,
   onOpenAuthModal,
-  onLogout
+  onLogout,
+  onOpenCypherModal
 }) {
   const kingpinNode = nodes?.find((n) => n.orbit_level === 0) || nodes?.[0];
   const kingpinName = kingpinNode?.name || "Abdul Karim Telgi";
@@ -176,6 +177,17 @@ export default function Header({
         >
           <Cpu size={14} />
           <span className="hidden lg:inline">AI Metrics</span>
+        </button>
+
+        {/* Neo4j Cypher & Graph Database Console Button */}
+        <button
+          onClick={onOpenCypherModal}
+          title="Open Neo4j Cypher Terminal & Graph Database Console"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-lg transition shadow-2xs shrink-0 cursor-pointer"
+        >
+          <Database size={13} className="text-emerald-600" />
+          <span className="hidden sm:inline">Graph DB</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
         </button>
 
         {/* Synchronize Database Button */}

@@ -8,6 +8,15 @@ class Settings:
     # Supabase Settings
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
+
+    # Neo4j Enterprise / Community Graph Database Settings
+    NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7687")
+    NEO4J_USER: str = os.getenv("NEO4J_USER", "neo4j")
+    NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "netsentry2026")
+    
+    # Query Acceleration & Cache Settings
+    CACHE_ENABLED: bool = True
+    CACHE_TTL_SECONDS: int = 300
     
     # Security & CORS
     CORS_ORIGINS: list = [

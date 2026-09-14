@@ -12,6 +12,7 @@ import ModelMetricsModal from "./components/ModelMetricsModal";
 import UploadDatasetModal from "./components/UploadDatasetModal";
 import AuthModal, { DEMO_OFFICERS } from "./components/AuthModal";
 import LoginPage from "./components/LoginPage";
+import CypherConsoleModal from "./components/CypherConsoleModal";
 import {
   fetchGraph,
   fetchEntityDetail,
@@ -28,6 +29,7 @@ export default function App() {
   const [currentOfficer, setCurrentOfficer] = useState(() => getStoredOfficer() || null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getStoredOfficer());
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isCypherModalOpen, setIsCypherModalOpen] = useState(false);
   const [graphData, setGraphData] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [entityDetail, setEntityDetail] = useState(null);
@@ -204,6 +206,7 @@ export default function App() {
         currentOfficer={currentOfficer}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
+        onOpenCypherModal={() => setIsCypherModalOpen(true)}
       />
 
       {/* Main Solar System Graph Workspace */}
@@ -328,6 +331,12 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         currentOfficer={currentOfficer}
         onSelectOfficer={handleSelectOfficer}
+      />
+
+      {/* Neo4j Cypher & Graph Database Console Modal */}
+      <CypherConsoleModal
+        isOpen={isCypherModalOpen}
+        onClose={() => setIsCypherModalOpen(false)}
       />
     </div>
   );
