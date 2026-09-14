@@ -13,6 +13,9 @@ import UploadDatasetModal from "./components/UploadDatasetModal";
 import AuthModal, { DEMO_OFFICERS } from "./components/AuthModal";
 import LoginPage from "./components/LoginPage";
 import CypherConsoleModal from "./components/CypherConsoleModal";
+import Sidebar from "./components/Sidebar";
+import DashboardView from "./components/DashboardView";
+import EntitiesView from "./components/EntitiesView";
 import {
   fetchGraph,
   fetchEntityDetail,
@@ -26,6 +29,7 @@ import {
 } from "./services/api";
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard" | "graph" | "entities"
   const [currentOfficer, setCurrentOfficer] = useState(() => getStoredOfficer() || null);
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getStoredOfficer());
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -186,117 +190,165 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-slate-100 select-none">
-      {/* Top Header */}
-      <Header
-        nodes={graphData?.nodes || []}
-        stats={graphData?.stats}
-        onSelectNode={handleSelectNode}
-        filterState={filterState}
-        onFilterStateChange={setFilterState}
-        filterTier={filterTier}
-        onFilterTierChange={setFilterTier}
-        onReloadData={handleReload}
-        onOpenIngest={() => setIsIngestModalOpen(true)}
-        onOpenMetrics={() => setIsMetricsModalOpen(true)}
-        onOpenUploadCsv={() => setIsUploadModalOpen(true)}
-        isLoading={isLoading}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
+    <div className="flex w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 select-none font-sans">
+      {/* Persistent Left Navigation Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onTabChange={setActiveTab}
         currentOfficer={currentOfficer}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onLogout={handleLogout}
+        onOpenIngest={() => setIsIngestModalOpen(true)}
+        onOpenUploadCsv={() => setIsUploadModalOpen(true)}
+        onOpenMetrics={() => setIsMetricsModalOpen(true)}
         onOpenCypherModal={() => setIsCypherModalOpen(true)}
+        onLogout={handleLogout}
+        pendingCount={pendingResolutions?.length || 0}
       />
 
-      {/* Main Solar System Graph Workspace */}
-      <main id="graph-workspace" className="relative flex-1 w-full h-full overflow-hidden">
-        {isLoading && !graphData ? (
-          <div className="flex items-center justify-center w-full h-full text-slate-500 font-mono text-sm">
-            Connecting to NetSentry Intelligence Database...
-          </div>
-        ) : viewMode === "3d" ? (
-          <Galaxy3DGraph
-            data={graphData}
-            selectedNodeId={selectedNodeId}
-            onSelectNode={handleSelectNode}
-            filterState={filterState}
-            filterTier={filterTier}
-            neutralizedNodeId={neutralizedNodeId}
-            timeProgress={timelineProgress}
-          />
-        ) : (
-          <SolarSystemGraph
-            data={graphData}
-            selectedNodeId={selectedNodeId}
-            onSelectNode={handleSelectNode}
-            filterState={filterState}
-            filterTier={filterTier}
-            neutralizedNodeId={neutralizedNodeId}
-            timeProgress={timelineProgress}
-          />
-        )}
-
-        {/* Temporal Timeline Playback Scrubber */}
-        <TimelinePlayer onTimeChange={(val) => setTimelineProgress(val)} />
-
-        {/* Right Inspector Drawer */}
-        <InspectorDrawer
-          entity={entityDetail}
-          isOpen={isInspectorOpen}
-          onClose={() => setIsInspectorOpen(false)}
-          onOpenDossier={handleOpenDossier}
-          onSimulateArrest={handleSimulateArrest}
+      {/* Main Operational Container */}
+      <div className="flex flex-col flex-1 h-full min-w-0 overflow-hidden bg-slate-950">
+        {/* Top Contextual Header */}
+        <Header
+          activeTab={activeTab}
+          nodes={graphData?.nodes || []}
+          stats={graphData?.stats}
+          onSelectNode={(id) => {
+            handleSelectNode(id);
+            setActiveTab("graph");
+          }}
+          filterState={filterState}
+          onFilterStateChange={setFilterState}
+          filterTier={filterTier}
+          onFilterTierChange={setFilterTier}
+          onReloadData={handleReload}
+          isLoading={isLoading}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          currentOfficer={currentOfficer}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
         />
 
-        {/* Bottom HITL Review Queue */}
-        <div id="hitl-adjudication">
-          <HITLReviewQueue
-            candidates={pendingResolutions}
-            onResolve={handleResolve}
-            isProcessing={isLoading}
-            currentOfficer={currentOfficer}
-            onOpenAuthModal={() => setIsAuthModalOpen(true)}
-          />
+        {/* Dynamic Multi-View Workspace */}
+        <div className="relative flex-1 w-full h-full overflow-hidden">
+          {activeTab === "dashboard" && (
+            <DashboardView
+              stats={graphData?.stats}
+              nodes={graphData?.nodes || []}
+              links={graphData?.links || []}
+              pendingCount={pendingResolutions?.length || 0}
+              onSelectNode={(id) => {
+                handleSelectNode(id);
+                setActiveTab("graph");
+              }}
+              onNavigateTab={setActiveTab}
+              currentOfficer={currentOfficer}
+            />
+          )}
+
+          {activeTab === "entities" && (
+            <EntitiesView
+              nodes={graphData?.nodes || []}
+              onSelectNode={(id) => {
+                handleSelectNode(id);
+                setActiveTab("graph");
+              }}
+              onOpenDossier={(entity) => {
+                setDossierEntity(entity);
+                setIsDossierOpen(true);
+              }}
+            />
+          )}
+
+          {activeTab === "graph" && (
+            <main id="graph-workspace" className="relative flex-1 w-full h-full overflow-hidden">
+              {isLoading && !graphData ? (
+                <div className="flex items-center justify-center w-full h-full text-slate-500 font-mono text-sm">
+                  Connecting to NetSentry Intelligence Database...
+                </div>
+              ) : viewMode === "3d" ? (
+                <Galaxy3DGraph
+                  data={graphData}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={handleSelectNode}
+                  filterState={filterState}
+                  filterTier={filterTier}
+                  neutralizedNodeId={neutralizedNodeId}
+                  timeProgress={timelineProgress}
+                />
+              ) : (
+                <SolarSystemGraph
+                  data={graphData}
+                  selectedNodeId={selectedNodeId}
+                  onSelectNode={handleSelectNode}
+                  filterState={filterState}
+                  filterTier={filterTier}
+                  neutralizedNodeId={neutralizedNodeId}
+                  timeProgress={timelineProgress}
+                />
+              )}
+
+              {/* Temporal Timeline Playback Scrubber */}
+              <TimelinePlayer onTimeChange={(val) => setTimelineProgress(val)} />
+
+              {/* Right Inspector Drawer */}
+              <InspectorDrawer
+                entity={entityDetail}
+                isOpen={isInspectorOpen}
+                onClose={() => setIsInspectorOpen(false)}
+                onOpenDossier={handleOpenDossier}
+                onSimulateArrest={handleSimulateArrest}
+              />
+
+              {/* Bottom HITL Review Queue */}
+              <div id="hitl-adjudication">
+                <HITLReviewQueue
+                  candidates={pendingResolutions}
+                  onResolve={handleResolve}
+                  isProcessing={isLoading}
+                  currentOfficer={currentOfficer}
+                  onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                />
+              </div>
+            </main>
+          )}
+
+          {/* Toast Notification Banner (Globally Visible) */}
+          {toastMessage && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white px-4 py-2 rounded-xl shadow-2xl text-xs font-mono border border-slate-700 z-50 animate-bounce backdrop-blur-md">
+              {toastMessage}
+            </div>
+          )}
         </div>
 
-        {/* Toast Notification Banner */}
-        {toastMessage && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-xl shadow-2xl text-xs font-mono border border-slate-700 z-50 animate-bounce">
-            {toastMessage}
+        {/* Accessible Semantic SEO Footer */}
+        <footer className="h-7 bg-slate-950 border-t border-slate-800/80 px-5 flex items-center justify-between text-[11px] text-slate-500 font-mono shrink-0 z-20">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 font-bold">NetSentry Sovereign v2.0</span>
+            <span className="text-slate-700">•</span>
+            <span className="text-emerald-400">BSA Section 65B Certified</span>
+            <span className="text-slate-700 hidden sm:inline">•</span>
+            <span className="text-slate-500 hidden sm:inline">SIH 2026 Problem 26189</span>
           </div>
-        )}
-      </main>
+          <nav aria-label="Quick Access Navigation" className="flex items-center gap-3">
+            <button onClick={() => setActiveTab("dashboard")} className={`hover:text-slate-200 transition ${activeTab === 'dashboard' ? 'text-indigo-400 font-bold' : ''}`}>Dashboard</button>
+            <span className="text-slate-700">•</span>
+            <button onClick={() => setActiveTab("graph")} className={`hover:text-slate-200 transition ${activeTab === 'graph' ? 'text-indigo-400 font-bold' : ''}`}>Graph</button>
+            <span className="text-slate-700">•</span>
+            <button onClick={() => setActiveTab("entities")} className={`hover:text-slate-200 transition ${activeTab === 'entities' ? 'text-indigo-400 font-bold' : ''}`}>Directory</button>
+            <span className="text-slate-700">•</span>
+            <a href="https://github.com/allanmaaz/NetSentry" target="_blank" rel="noopener noreferrer" className="hover:text-sky-400 transition">GitHub</a>
+          </nav>
+        </footer>
+      </div>
 
-      {/* Accessible Semantic SEO Footer */}
-      <footer className="h-7 bg-white border-t border-slate-200 px-5 flex items-center justify-between text-[11px] text-slate-500 font-mono shrink-0 z-20">
-        <div className="flex items-center gap-2">
-          <span>NetSentry Platform v1.0</span>
-          <span className="text-slate-300">•</span>
-          <span>Section 65B Compliant</span>
-          <span className="text-slate-300 hidden sm:inline">•</span>
-          <span className="text-slate-400 hidden sm:inline">Smart India Hackathon 2026</span>
-        </div>
-        <nav aria-label="Quick Access Navigation" className="flex items-center gap-3">
-          <a href="#graph-workspace" className="hover:text-slate-900 transition">Canvas</a>
-          <span className="text-slate-300">•</span>
-          <a href="#hitl-adjudication" className="hover:text-slate-900 transition">Adjudication</a>
-          <span className="text-slate-300">•</span>
-          <a href="https://github.com/allanmaaz/NetSentry" target="_blank" rel="noopener noreferrer" className="hover:text-sky-600 transition">GitHub</a>
-          <span className="text-slate-300">•</span>
-          <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="hover:text-sky-600 transition">Sitemap</a>
-        </nav>
-      </footer>
-
-
-      {/* Section 65B Court Dossier Modal */}
+      {/* Global Modals Accessible Across All Views */}
       <DossierModal
         entity={dossierEntity}
         isOpen={isDossierOpen}
         onClose={() => setIsDossierOpen(false)}
       />
 
-      {/* Tactical Arrest Impact Modal */}
       <TacticalSimModal
         result={tacticalResult}
         isOpen={isTacticalModalOpen}
@@ -305,27 +357,23 @@ export default function App() {
         isNeutralized={neutralizedNodeId === tacticalResult?.neutralized_target?.id}
       />
 
-      {/* Live FIR Narrative Ingestion Modal */}
       <LiveIngestModal
         isOpen={isIngestModalOpen}
         onClose={() => setIsIngestModalOpen(false)}
         onIngestSuccess={handleIngestSuccess}
       />
 
-      {/* AI Model Evaluation & Training Metrics Modal */}
       <ModelMetricsModal
         isOpen={isMetricsModalOpen}
         onClose={() => setIsMetricsModalOpen(false)}
       />
 
-      {/* Real CSV Law Enforcement Dataset Ingestion Modal */}
       <UploadDatasetModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUploadSuccess={loadData}
       />
 
-      {/* Sovereign Officer Authentication & RBAC Switcher Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
@@ -333,7 +381,6 @@ export default function App() {
         onSelectOfficer={handleSelectOfficer}
       />
 
-      {/* Neo4j Cypher & Graph Database Console Modal */}
       <CypherConsoleModal
         isOpen={isCypherModalOpen}
         onClose={() => setIsCypherModalOpen(false)}
