@@ -9,7 +9,7 @@ export default function HITLReviewQueue({
   onOpenAuthModal,
   userRole = null
 }) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [reviewCandidate, setReviewCandidate] = useState(null);
 
   if (!candidates || candidates.length === 0) return null;
@@ -28,22 +28,26 @@ export default function HITLReviewQueue({
 
   return (
     <>
-      <div className="absolute bottom-3 left-3 right-3 sm:left-6 sm:right-6 max-w-3xl mx-auto z-20 transition-all duration-200">
+      <div className={`absolute z-20 transition-all duration-200 ${
+        isExpanded
+          ? "bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:w-[500px]"
+          : "bottom-4 left-4 sm:left-6"
+      }`}>
         <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100">
           {/* Dock Header */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-950 text-white text-xs font-semibold hover:bg-slate-900 transition cursor-pointer"
+            className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 bg-slate-950 text-white text-xs font-semibold hover:bg-slate-900 transition cursor-pointer"
           >
             <div className="flex items-center gap-2">
-              <ShieldCheck size={16} className="text-amber-400" />
+              <ShieldCheck size={16} className="text-amber-400 shrink-0" />
               <span className="font-bold">Suspect Identity Match Alert</span>
               <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
                 {candidates.length} to review
               </span>
             </div>
-            <div className="flex items-center gap-1 text-slate-400 text-xs">
-              <span>{isExpanded ? "Hide" : "Show"}</span>
+            <div className="flex items-center gap-1 text-slate-400 text-xs shrink-0">
+              <span className="text-[11px]">{isExpanded ? "Minimize" : "Review"}</span>
               {isExpanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
             </div>
           </button>

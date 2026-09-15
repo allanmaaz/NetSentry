@@ -45,26 +45,26 @@ export default function TimelinePlayer({ onTimeChange }) {
   const currentMilestone = MILESTONES[milestoneIndex];
 
   return (
-    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-200 shadow-xl z-20 flex items-center gap-4 w-[520px] max-w-[92vw]">
+    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-xl px-4 py-2.5 rounded-2xl border border-slate-800 shadow-2xl z-20 flex items-center gap-3.5 w-[480px] max-w-[90vw] text-slate-200">
       {/* Play / Pause Toggle */}
       <button
         onClick={() => {
           if (progress >= 100) setProgress(0);
           setIsPlaying(!isPlaying);
         }}
-        className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center hover:bg-slate-800 transition shrink-0 shadow-sm"
+        className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 text-white flex items-center justify-center hover:bg-slate-700 transition shrink-0 shadow-sm cursor-pointer"
       >
-        {isPlaying ? <Pause size={15} /> : <Play size={15} className="ml-0.5" />}
+        {isPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
       </button>
 
       {/* Slider & Milestone */}
       <div className="flex-1 space-y-1">
-        <div className="flex items-center justify-between text-[11px] font-mono">
-          <div className="flex items-center gap-1.5 text-slate-700 font-bold">
-            <Clock size={12} className="text-purple-600" />
+        <div className="flex items-center justify-between text-[11px]">
+          <div className="flex items-center gap-1.5 text-white font-bold">
+            <Clock size={12} className="text-purple-400" />
             <span>{currentMilestone.month}</span>
           </div>
-          <span className="text-slate-500 truncate max-w-[280px]">
+          <span className="text-slate-400 text-[11px] truncate max-w-[240px]">
             {currentMilestone.title}
           </span>
         </div>
@@ -75,7 +75,7 @@ export default function TimelinePlayer({ onTimeChange }) {
           max="100"
           value={progress}
           onChange={handleSlider}
-          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
+          className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
         />
       </div>
 
@@ -87,9 +87,9 @@ export default function TimelinePlayer({ onTimeChange }) {
           if (onTimeChange) onTimeChange(100);
         }}
         title="Reset to Present Day"
-        className="p-2 text-slate-400 hover:text-slate-700 rounded-lg transition"
+        className="p-1.5 text-slate-400 hover:text-white rounded-lg transition cursor-pointer"
       >
-        <RotateCcw size={15} />
+        <RotateCcw size={14} />
       </button>
     </div>
   );

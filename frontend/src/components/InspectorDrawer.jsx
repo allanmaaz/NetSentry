@@ -124,7 +124,7 @@ export default function InspectorDrawer({
             <div className="text-sm font-bold text-white font-mono">
               {Number(entity.betweenness || entity.betweenness_score || 0.05).toFixed(2)}
             </div>
-            <div className="text-[10px] text-slate-400 uppercase mt-0.5">Bottleneck</div>
+            <div className="text-[10px] text-slate-400 uppercase mt-0.5">Influence</div>
           </div>
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
             <div className="text-sm font-bold text-white font-mono">
@@ -183,25 +183,47 @@ export default function InspectorDrawer({
       </div>
 
       {/* Action Footer */}
-      <div className="p-4 border-t border-slate-800 bg-slate-950 space-y-2">
+      <div className="p-3.5 border-t border-slate-800 bg-slate-950 space-y-2 shrink-0">
         <button
           onClick={() => onSimulateArrest && onSimulateArrest(entity.id)}
-          className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
+          className="w-full py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
         >
-          <ShieldAlert size={15} />
+          <ShieldAlert size={14} />
           Simulate Arrest (Test Impact)
         </button>
 
-        {/* Shortest Path Picker */}
-        <button
-          onClick={() => setShowTracePicker((v) => !v)}
-          className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-        >
-          <Route size={15} />
-          Trace Route to Suspect
-        </button>
+        {/* 2 Side-by-Side Action Buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setShowTracePicker((v) => !v)}
+            className="py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 text-emerald-400 border border-slate-800 font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+          >
+            <Route size={14} />
+            <span className="truncate">Trace Route</span>
+          </button>
+
+          {currentOfficer?.role === "Analyst" ? (
+            <button
+              onClick={onOpenAuthModal}
+              className="py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 text-amber-400 border border-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Lock size={13} />
+              <span className="truncate">Court Dossier</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onOpenDossier(entity)}
+              className="py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-200 hover:text-white border border-slate-800 font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+            >
+              <FileText size={14} />
+              <span className="truncate">Court Dossier</span>
+            </button>
+          )}
+        </div>
+
+        {/* Trace Route Picker (Expandable if toggled) */}
         {showTracePicker && (
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+          <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
             <select
               value={traceTargetId}
               onChange={(e) => setTraceTargetId(e.target.value)}
@@ -224,30 +246,11 @@ export default function InspectorDrawer({
                 }
               }}
               disabled={!traceTargetId}
-              className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition disabled:opacity-40"
+              className="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition disabled:opacity-40"
             >
               Trace Connection
             </button>
           </div>
-        )}
-
-        {/* Export Court Dossier */}
-        {currentOfficer?.role === "Analyst" ? (
-          <button
-            onClick={onOpenAuthModal}
-            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-amber-400 border border-slate-800 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Lock size={14} />
-            <span>Court Export (Supervisor Clearance Required)</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => onOpenDossier(entity)}
-            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-          >
-            <FileText size={15} />
-            View Full Court Case Dossier
-          </button>
         )}
       </div>
     </aside>
