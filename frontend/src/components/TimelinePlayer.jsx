@@ -45,14 +45,14 @@ export default function TimelinePlayer({ onTimeChange }) {
   const currentMilestone = MILESTONES[milestoneIndex];
 
   return (
-    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-200 shadow-xl z-20 flex items-center gap-4 w-[520px] max-w-[92vw]">
+    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 rounded-2xl border border-slate-200 shadow-xl z-20 flex items-center gap-3 sm:gap-4 w-[520px] max-w-[92vw]">
       {/* Play / Pause Toggle */}
       <button
         onClick={() => {
           if (progress >= 100) setProgress(0);
           setIsPlaying(!isPlaying);
         }}
-        className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center hover:bg-slate-800 transition shrink-0 shadow-sm"
+        className="w-9 h-9 max-lg:w-11 max-lg:h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center hover:bg-slate-800 transition shrink-0 shadow-sm"
       >
         {isPlaying ? <Pause size={15} /> : <Play size={15} className="ml-0.5" />}
       </button>
@@ -64,7 +64,7 @@ export default function TimelinePlayer({ onTimeChange }) {
             <Clock size={12} className="text-purple-600" />
             <span>{currentMilestone.month}</span>
           </div>
-          <span className="text-slate-500 truncate max-w-[280px]">
+          <span className="text-slate-500 truncate max-w-[130px] min-[420px]:max-w-[280px]">
             {currentMilestone.title}
           </span>
         </div>

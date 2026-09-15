@@ -114,6 +114,20 @@ export default function SolarSystemGraph({
   const renderRef = useRef(null);
 
   const [hoveredNodeState, setHoveredNodeState] = useState(null);
+  // R6 — collapsible legend on small screens
+  const [legendOpen, setLegendOpen] = useState(false);
+  // R8 — relayout trigger for window resize / rotation
+  const [layoutTick, setLayoutTick] = useState(0);
+
+  useEffect(() => {
+    const onResize = () => setLayoutTick((t) => t + 1);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
 
   // Keep selectedNodeId in ref so selection NEVER restarts the physics engine!
   useEffect(() => {
@@ -227,6 +241,10 @@ export default function SolarSystemGraph({
     const cx = width / 2;
     const cy = height / 2;
 
+    // R8 — scale orbits to fit small screens (outer orbit must fit min dimension)
+    const orbitScale = Math.min(1, Math.min(width, height) / 900);
+    const scaledRadii = orbitRadii.map((r) => r * orbitScale);
+
     // Arrange nodes into stable, peaceful celestial orbits
     const orbitGroups = { 0: [], 1: [], 2: [], 3: [] };
     filteredNodes.forEach((n) => {
@@ -245,7 +263,7 @@ export default function SolarSystemGraph({
     // Distribute planets on Orbit 1, 2, 3 with fixed angles
     [1, 2, 3].forEach((lvl) => {
       const group = orbitGroups[lvl];
-      const radius = orbitRadii[lvl];
+      const radius = scaledRadii[lvl];
       const total = group.length;
       group.forEach((node, idx) => {
         const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
@@ -301,7 +319,7 @@ export default function SolarSystemGraph({
       });
 
       // 2. Draw Concentric Solar Orbital Tracks
-      orbitRadii.forEach((r, idx) => {
+      scaledRadii.forEach((r, idx) => {
         if (r === 0) return;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, 2 * Math.PI);
@@ -539,7 +557,9 @@ export default function SolarSystemGraph({
       for (let i = nodesRef.current.length - 1; i >= 0; i--) {
         const n = nodesRef.current[i];
         if (!isNodeVisible(n)) continue;
-        const r = (n.orbit_level === 0 ? 32 : n.radius || 15) + 6;
+        // R9 — generous tap targets on touch devices
+        const coarse = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+        const r = (n.orbit_level === 0 ? 32 : n.radius || 15) + (coarse ? 14 : 6);
         const dx = tx - n.x;
         const dy = ty - n.y;
         if (dx * dx + dy * dy <= r * r) {
@@ -633,7 +653,7 @@ export default function SolarSystemGraph({
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("click", handleClick);
     };
-  }, [data, filterState, filterTier]); // NOTICE: selectedNodeId removed from deps to eliminate jumping!
+  }, [data, filterState, filterTier, layoutTick]); // NOTICE: selectedNodeId removed from deps to eliminate jumping!
 
   // Controls
   const handleZoom = (factor) => {
@@ -657,28 +677,28 @@ export default function SolarSystemGraph({
         <button
           onClick={() => handleZoom(1.3)}
           title="Zoom In"
-          className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition"
+          className="p-2 max-lg:p-2.5 hover:bg-slate-100 rounded-lg text-slate-700 transition"
         >
           <ZoomIn size={18} />
         </button>
         <button
           onClick={() => handleZoom(0.7)}
           title="Zoom Out"
-          className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition"
+          className="p-2 max-lg:p-2.5 hover:bg-slate-100 rounded-lg text-slate-700 transition"
         >
           <ZoomOut size={18} />
         </button>
         <button
           onClick={handleReset}
           title="Center Orbit View"
-          className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition"
+          className="p-2 max-lg:p-2.5 hover:bg-slate-100 rounded-lg text-slate-700 transition"
         >
           <Compass size={18} />
         </button>
       </div>
 
-      {/* Legend Card with Real Icon Guide */}
-      <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm text-xs text-slate-600 flex items-center gap-5 z-10">
+      {/* R6 — Full legend on wide screens, collapsible chip on small */}
+      <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm text-xs text-slate-600 hidden min-[700px]:flex items-center gap-5 z-10">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-red-600"></span>
           <span className="font-semibold text-slate-900">Sun (Kingpin)</span>
@@ -696,11 +716,39 @@ export default function SolarSystemGraph({
           <span className="text-purple-700 font-semibold">Multi-State Halo</span>
         </div>
       </div>
+      <div className="absolute top-4 right-4 z-10 min-[700px]:hidden">
+        <button onClick={() => setLegendOpen((v) => !v)} className="overlay-chip" aria-label="Toggle legend">
+          <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
+          Legend
+        </button>
+        {legendOpen && (
+          <div className="mt-2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-xl border border-slate-200 shadow-xl text-xs text-slate-600 space-y-2 min-w-[180px]">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-red-600"></span>
+              <span className="font-semibold text-slate-900">Sun (Kingpin)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+              <span>Lieutenant</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-sky-600"></span>
+              <span>Operative</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-purple-600 border-dashed"></span>
+              <span className="text-purple-700 font-semibold">Multi-State Halo</span>
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Hover Tooltip Card */}
+      {/* Hover Tooltip Card — R9: mouse pointers only (tap opens drawer on touch) */}
       {hoveredNodeState && (
         <div
-          className="absolute pointer-events-none bg-slate-900/95 text-white px-3.5 py-2.5 rounded-xl shadow-2xl text-xs z-20 backdrop-blur border border-slate-700"
+          className="absolute pointer-events-none bg-slate-900/95 text-white px-3.5 py-2.5 rounded-xl shadow-2xl text-xs z-20 backdrop-blur border border-slate-700 hidden [@media(pointer:fine)]:block max-w-[70vw]"
           style={{ bottom: 20, left: 20 }}
         >
           <div className="font-bold text-sm text-white">{hoveredNodeState.name}</div>

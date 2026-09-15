@@ -33,6 +33,8 @@ export default function Galaxy3DGraph({
   const ringMeshesRef = useRef([]);
 
   const [hoveredNode, setHoveredNode] = useState(null);
+  // R6 — collapsible legend on small screens
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const colors = useMemo(
     () => ({
@@ -93,9 +95,11 @@ export default function Galaxy3DGraph({
     scene.fog = new THREE.FogExp2(colors.bg, 0.0028);
     sceneRef.current = scene;
 
-    // Camera
+    // Camera — R8: pull back on narrow/portrait screens so the galaxy fits
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    camera.position.set(0, 85, 150);
+    const aspect = width / Math.max(height, 1);
+    const distScale = aspect < 1 ? Math.min(2.2, 1 / Math.max(aspect, 0.45)) : 1;
+    camera.position.set(0, 85 * distScale, 150 * distScale);
     cameraRef.current = camera;
 
     // Renderer
@@ -448,35 +452,35 @@ export default function Galaxy3DGraph({
         <button
           onClick={() => handleZoom(1.3)}
           title="Zoom In"
-          className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition"
+          className="p-2 max-lg:p-2.5 hover:bg-slate-100 rounded-lg text-slate-700 transition"
         >
           <ZoomIn size={18} />
         </button>
         <button
           onClick={() => handleZoom(0.7)}
           title="Zoom Out"
-          className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition"
+          className="p-2 max-lg:p-2.5 hover:bg-slate-100 rounded-lg text-slate-700 transition"
         >
           <ZoomOut size={18} />
         </button>
         <button
           onClick={handleReset}
           title="Reset Orbit View"
-          className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition"
+          className="p-2 max-lg:p-2.5 hover:bg-slate-100 rounded-lg text-slate-700 transition"
         >
           <Compass size={18} />
         </button>
         <button
           onClick={handleFocusKingpin}
           title="Focus Sun (Kingpin)"
-          className="p-2 hover:bg-amber-50 rounded-lg text-amber-600 transition"
+          className="p-2 max-lg:p-2.5 hover:bg-amber-50 rounded-lg text-amber-600 transition"
         >
           <RefreshCw size={18} />
         </button>
       </div>
 
-      {/* 3D Legend Pill */}
-      <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-200 shadow-sm text-xs text-slate-600 flex items-center gap-4 z-10">
+      {/* R6 — 3D Legend: full pill on wide screens, chip on small */}
+      <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-200 shadow-sm text-xs text-slate-600 hidden min-[700px]:flex items-center gap-4 z-10">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></span>
           <span className="font-bold text-slate-900">3D Sun (Kingpin)</span>
@@ -494,11 +498,39 @@ export default function Galaxy3DGraph({
           <span className="text-purple-700 font-semibold">Multi-State</span>
         </div>
       </div>
+      <div className="absolute top-4 right-4 z-10 min-[700px]:hidden">
+        <button onClick={() => setLegendOpen((v) => !v)} className="overlay-chip" aria-label="Toggle legend">
+          <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+          Legend
+        </button>
+        {legendOpen && (
+          <div className="mt-2 bg-white/95 backdrop-blur-md px-4 py-3 rounded-xl border border-slate-200 shadow-xl text-xs text-slate-600 space-y-2 min-w-[180px]">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-orange-500"></span>
+              <span className="font-bold text-slate-900">3D Sun (Kingpin)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-sky-500"></span>
+              <span>Lieutenant</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-purple-500"></span>
+              <span>Operative</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-purple-500 border-dashed"></span>
+              <span className="text-purple-700 font-semibold">Multi-State</span>
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Hover Inspect Card */}
+      {/* Hover Inspect Card — R9: mouse pointers only */}
       {hoveredNode && (
         <div
-          className="absolute pointer-events-none bg-slate-900/95 text-white px-4 py-3 rounded-xl shadow-2xl text-xs z-20 backdrop-blur border border-slate-700 transition-all"
+          className="absolute pointer-events-none bg-slate-900/95 text-white px-4 py-3 rounded-xl shadow-2xl text-xs z-20 backdrop-blur border border-slate-700 transition-all hidden [@media(pointer:fine)]:block max-w-[70vw]"
           style={{ bottom: 24, left: 24 }}
         >
           <div className="font-bold text-sm text-white">
