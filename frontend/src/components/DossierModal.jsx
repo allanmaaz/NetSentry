@@ -1,7 +1,16 @@
-import React from "react";
-import { X, Printer, Shield, Gavel, FileCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Printer, Shield, Gavel, FileCheck, CheckCircle2 } from "lucide-react";
+import { computeEntityHash } from "../services/blockchainLedger";
 
 export default function DossierModal({ entity, isOpen, onClose }) {
+  const [entityHash, setEntityHash] = useState(null);
+
+  useEffect(() => {
+    if (entity && isOpen) {
+      computeEntityHash(entity).then(setEntityHash);
+    }
+  }, [entity, isOpen]);
+
   if (!isOpen || !entity) return null;
 
   return (
@@ -42,7 +51,10 @@ export default function DossierModal({ entity, isOpen, onClose }) {
               CONFIDENTIAL // FOR LAW ENFORCEMENT & JUDICIAL ADJUDICATION ONLY
             </p>
             <p className="text-[11px] text-slate-400 font-mono">
-              DOSSIER REF: NETSENTRY/65B/2026/{entity.id.toUpperCase()} • GENERATED: 2026-09-13
+              DOSSIER REF: NETSENTRY/65B/2026/{entity.id.toUpperCase()} • GENERATED: {new Date().toLocaleDateString("en-IN")}
+            </p>
+            <p className="text-[11px] text-slate-400 font-mono">
+              SHA-256 SEAL: <span className="text-amber-600 font-bold break-all">{entityHash || "computing…"}</span>
             </p>
           </div>
 
@@ -76,7 +88,12 @@ export default function DossierModal({ entity, isOpen, onClose }) {
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 font-mono">
               <FileCheck size={16} className="text-emerald-600" />
-              <span>ALGORITHMIC INTEGRITY & EVIDENCE CERTIFICATION</span>
+              <span>ALGORITHMIC INTEGRITY &amp; EVIDENCE CERTIFICATION</span>
+              {entityHash && (
+                <span className="ml-auto flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-300">
+                  <CheckCircle2 size={11} /> SHA-256 SEALED
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-600 leading-relaxed bg-emerald-50/50 p-3 rounded-lg border border-emerald-200 italic">
               "This electronic dossier is produced pursuant to Section 65B of the Indian Evidence Act. The identity resolution between interstate records was calculated through deterministic phonetic analysis (Double Metaphone) and corroborated by exact cryptographic digital matches on telecom identifier (MSISDN) and financial transaction trails. Hash validation confirmed intact."

@@ -10,7 +10,8 @@ import {
   LogOut,
   Shield,
   UserCheck,
-  ChevronRight
+  ChevronRight,
+  Link2
 } from "lucide-react";
 
 export default function Sidebar({
@@ -24,6 +25,7 @@ export default function Sidebar({
   onOpenMetrics,
   onOpenUploadCsv,
   onOpenCypherModal,
+  onOpenLedger,
   pendingCount = 0
 }) {
   const handleSelectTab = (id) => {
@@ -137,6 +139,18 @@ export default function Sidebar({
               <Cpu size={15} className="text-purple-500" />
               <span>AI Model ROC-AUC</span>
             </div>
+          </button>
+
+          {/* Chain of Custody Ledger */}
+          <button
+            onClick={onOpenLedger}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-mono text-slate-400 hover:text-amber-400 hover:bg-slate-900 transition group cursor-pointer border border-transparent hover:border-amber-500/30"
+          >
+            <div className="flex items-center gap-2.5">
+              <Link2 size={15} className="text-amber-500" />
+              <span>Chain of Custody</span>
+            </div>
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">65B</span>
           </button>
         </div>
       </div>

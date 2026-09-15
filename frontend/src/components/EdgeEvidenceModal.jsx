@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   Phone,
@@ -19,9 +19,11 @@ import {
 } from "lucide-react";
 import { getCDRRecords } from "../services/canonicalCDR";
 import { getTransactionRecords } from "../services/canonicalTransactions";
+import { computeEdgeHash } from "../services/blockchainLedger";
 
 export default function EdgeEvidenceModal({ isOpen, onClose, edge, onSelectNode }) {
   const [activeTab, setActiveTab] = useState("all"); // "all" | "cdr" | "financial"
+  const [edgeHash, setEdgeHash] = useState(null);
 
   if (!isOpen || !edge) return null;
 
@@ -43,6 +45,16 @@ export default function EdgeEvidenceModal({ isOpen, onClose, edge, onSelectNode 
   const totalTransacted = txnRecords.reduce((acc, t) => acc + (t.amount || 0), 0);
   const totalCallSeconds = cdrRecords.reduce((acc, c) => acc + (c.duration_sec || 0), 0);
   const totalCallMins = Math.round(totalCallSeconds / 60);
+
+  // Compute real SHA-256 for this edge on mount
+  useEffect(() => {
+    if (!isOpen || !edge) return;
+    const src = edge.source?.id || (typeof edge.source === "string" ? edge.source : "");
+    const tgt = edge.target?.id || (typeof edge.target === "string" ? edge.target : "");
+    const cdr = getCDRRecords(src, tgt);
+    const txn = getTransactionRecords(src, tgt);
+    computeEdgeHash(src, tgt, cdr.length, txn.length, edge.type || "ASSOCIATED_WITH").then(setEdgeHash);
+  }, [isOpen, edge]);
 
   return (
     <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -360,10 +372,10 @@ export default function EdgeEvidenceModal({ isOpen, onClose, edge, onSelectNode 
             <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
               The linkage between <strong className="text-white">{sourceName}</strong> and <strong className="text-white">{targetName}</strong> is corroborated by exact cryptographic digital matches on telecom identifiers (MSISDN) and banking account trails. All records originate from lawfully subpoenaed CCTNS, ICJS, and FIU repositories.
             </p>
-            <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-800 text-[10px] text-slate-500">
-              <span>SHA-256 HASH: <code className="text-slate-400">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code></span>
-              <span className="text-emerald-400 font-bold">✓ Hash Verified Tamper-Proof</span>
-            </div>
+              <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-800 text-[10px] text-slate-500">
+                <span>SHA-256 HASH: <code className="text-slate-400 break-all">{edgeHash || "computing…"}</code></span>
+                <span className="text-emerald-400 font-bold">✓ Hash Verified Tamper-Proof</span>
+              </div>
           </div>
 
         </div>

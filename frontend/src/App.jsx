@@ -14,10 +14,12 @@ import AuthModal, { DEMO_OFFICERS } from "./components/AuthModal";
 import LoginPage from "./components/LoginPage";
 import CypherConsoleModal from "./components/CypherConsoleModal";
 import EdgeEvidenceModal from "./components/EdgeEvidenceModal";
+import BlockchainLedgerModal from "./components/BlockchainLedgerModal";
 import Sidebar from "./components/Sidebar";
 import DashboardView from "./components/DashboardView";
 import EntitiesView from "./components/EntitiesView";
 import { getCustomIngestedData } from "./services/normalizer";
+import { addBlock, initChain } from "./services/blockchainLedger";
 import {
   fetchGraph,
   fetchEntityDetail,
@@ -60,6 +62,7 @@ export default function App() {
   const [filterTier, setFilterTier] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState(null);
+  const [isLedgerOpen, setIsLedgerOpen] = useState(false);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -113,6 +116,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    initChain(); // Initialize blockchain genesis block on first run
     loadData();
   }, []);
 
@@ -131,7 +135,15 @@ export default function App() {
     try {
       const res = await submitResolutionDecision(candidateId, action);
       showToast(`Adjudication confirmed: ${action} successfully committed to database.`);
-      // Reload graph and pending list from database
+
+      // Record merge/reject in blockchain ledger
+      addBlock(
+        action === "MERGE" ? "HITL_MERGE_APPROVED" : "HITL_MERGE_REJECTED",
+        `Entity ${action === "MERGE" ? "Merge Confirmed" : "Merge Rejected"} — HITL Adjudication`,
+        { candidate_id: candidateId, action, officer: currentOfficer?.badge_id },
+        currentOfficer
+      );
+
       const [gData, pData] = await Promise.all([
         fetchGraph(),
         fetchPendingResolutions()
@@ -181,6 +193,14 @@ export default function App() {
     setNeutralizedNodeId(nodeId);
     setIsTacticalModalOpen(false);
     showToast(`Tactical neutralization confirmed: Target marked as ARRESTED. Network routes severed.`);
+
+    // Record arrest simulation in blockchain ledger
+    addBlock(
+      "ARREST_SIMULATED",
+      `Network Fragmentation Arrest Simulation — Node Neutralized`,
+      { neutralized_node_id: nodeId, simulated_by: currentOfficer?.badge_id, network_impact: tacticalResult?.network_fragmentation_score },
+      currentOfficer
+    );
   };
 
   const handleIngestSuccess = (result) => {
@@ -211,6 +231,15 @@ export default function App() {
 
     const firstNode = newNodes[0];
     showToast(`Live Ingest Verified: ${newNodes.length} suspect(s) inserted on Orbit II with glowing telemetry.`);
+
+    // Record block in chain-of-custody ledger
+    addBlock(
+      "ENTITY_INGESTED",
+      `${newNodes.length} Suspect(s) Ingested via Live FIR Pipeline`,
+      { count: newNodes.length, names: newNodes.map(n => n.name || n.id), edges_added: newEdges.length },
+      currentOfficer
+    );
+
     if (firstNode) {
       handleSelectNode(firstNode.id);
     }
@@ -254,6 +283,7 @@ export default function App() {
         onOpenUploadCsv={() => setIsUploadModalOpen(true)}
         onOpenMetrics={() => setIsMetricsModalOpen(true)}
         onOpenCypherModal={() => setIsCypherModalOpen(true)}
+        onOpenLedger={() => setIsLedgerOpen(true)}
         onLogout={handleLogout}
         pendingCount={pendingResolutions?.length || 0}
       />
@@ -450,6 +480,11 @@ export default function App() {
           handleSelectNode(id);
           setIsEdgeModalOpen(false);
         }}
+      />
+
+      <BlockchainLedgerModal
+        isOpen={isLedgerOpen}
+        onClose={() => setIsLedgerOpen(false)}
       />
     </div>
   );

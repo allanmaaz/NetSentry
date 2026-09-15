@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X, UploadCloud, FileText, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { uploadCsvText, uploadCsvFile } from "../services/api";
 import { normalizeCSVToEntities, saveCustomIngestedData } from "../services/normalizer";
+import { addBlock } from "../services/blockchainLedger";
 
 const SAMPLE_CSV_TEMPLATE = `name,alias,phone,vehicle,police_station,state,sections,crime_type,risk_score
 "Dawood Ibrahim","Muchhad","+91-9820099881","MH-01-BK-1111","Dongri PS","Maharashtra","302, 120B IPC, MCOCA","Organized Crime & Extortion",99
@@ -38,6 +39,7 @@ export default function UploadDatasetModal({ isOpen, onClose, onUploadSuccess })
     try {
       const res = await uploadCsvText(csvText);
       setStatusMessage(`Successfully ingested ${res.ingested_records} records into persistent database!`);
+      addBlock("DATASET_UPLOADED", `CSV Dataset Ingested — ${res.ingested_records} Records`, { records: res.ingested_records, source: "CSV Upload", dept: "MH_POLICE" });
       if (onUploadSuccess) onUploadSuccess();
       setTimeout(() => {
         onClose();
@@ -51,6 +53,7 @@ export default function UploadDatasetModal({ isOpen, onClose, onUploadSuccess })
           saveCustomIngestedData(result.nodes, result.edges);
           setIsError(false);
           setStatusMessage(`Successfully ingested ${result.nodes.length} records into investigation graph via Schema Adapter!`);
+          addBlock("DATASET_UPLOADED", `CSV Dataset Ingested via Schema Adapter — ${result.nodes.length} Records`, { records: result.nodes.length, source: "Schema Adapter", dept: "MH_POLICE" });
           if (onUploadSuccess) onUploadSuccess();
           setTimeout(() => {
             onClose();
