@@ -57,6 +57,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState("2d"); // "2d" | "3d"
   const [selectedEdge, setSelectedEdge] = useState(null);
   const [isEdgeModalOpen, setIsEdgeModalOpen] = useState(false);
+  const [tracedPath, setTracedPath] = useState([]);
 
   const [filterState, setFilterState] = useState("all");
   const [filterTier, setFilterTier] = useState("all");
@@ -72,6 +73,20 @@ export default function App() {
   const handleSelectEdge = (edge) => {
     setSelectedEdge(edge);
     setIsEdgeModalOpen(true);
+  };
+
+  const handleTracePath = (sourceId, targetId) => {
+    const nodes = graphData?.nodes || [];
+    const edges = graphData?.edges || graphData?.links || [];
+    const path = bfsShortestPath(nodes, edges, sourceId, targetId);
+    if (!path) {
+      showToast("No connected path found between the selected nodes.");
+      setTracedPath([]);
+      return;
+    }
+    setTracedPath(path);
+    const names = pathNodeNames(path, nodes);
+    showToast(`Path traced: ${path.length - 1} hop(s) — ${names.join(" → ")}`);
   };
 
   const loadData = async () => {
@@ -369,7 +384,30 @@ export default function App() {
                   timeProgress={timelineProgress}
                   onSelectEdge={handleSelectEdge}
                   selectedEdge={selectedEdge}
+                  tracedPath={tracedPath}
                 />
+              )}
+
+              {/* T5.3 — BFS path summary banner */}
+              {tracedPath.length >= 2 && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-xl w-[90%] pointer-events-auto">
+                  <div className="bg-slate-900/95 backdrop-blur-md border border-emerald-500/50 rounded-xl p-3 shadow-2xl flex items-center justify-between gap-4 animate-fadeIn">
+                    <div>
+                      <div className="text-[10px] font-extrabold text-emerald-400 font-mono uppercase tracking-wider">
+                        BFS PATH TRACE • {tracedPath.length - 1} HOP{tracedPath.length - 1 === 1 ? "" : "S"}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-200 font-mono leading-relaxed">
+                        {pathNodeNames(tracedPath, graphData?.nodes || []).join("  →  ")}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setTracedPath([])}
+                      className="text-[11px] font-bold text-slate-400 hover:text-white font-mono px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-750 rounded-md transition cursor-pointer shrink-0"
+                    >
+                      ✕ CLEAR
+                    </button>
+                  </div>
+                </div>
               )}
 
               {/* Temporal Timeline Playback Scrubber */}
@@ -384,6 +422,8 @@ export default function App() {
                 onSimulateArrest={handleSimulateArrest}
                 currentOfficer={currentOfficer}
                 onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                onTracePath={handleTracePath}
+                graphNodes={graphData?.nodes || []}
               />
 
               {/* Bottom HITL Review Queue */}

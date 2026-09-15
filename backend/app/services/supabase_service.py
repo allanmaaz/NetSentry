@@ -461,6 +461,9 @@ class SupabaseService:
             "canonical_id": primary_id
         }
 
+    # Compatibility alias for resolution router
+    apply_merge_decision = apply_resolution_decision
+
     def ingest_csv_data(self, csv_text: str) -> Dict[str, Any]:
         """
         Ingests user-uploaded raw CSV text, inserts records into SQLite,

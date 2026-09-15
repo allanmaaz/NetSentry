@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   X,
   ShieldAlert,
@@ -10,8 +10,11 @@ import {
   Users,
   ExternalLink,
   MapPin,
-  Lock
+  Lock,
+  Route,
+  Activity
 } from "lucide-react";
+import { generateLegalJustification, computeIsolationScore } from "../services/xaiExplainer";
 
 export default function InspectorDrawer({
   entity,
@@ -20,9 +23,27 @@ export default function InspectorDrawer({
   onOpenDossier,
   onSimulateArrest,
   currentOfficer,
-  onOpenAuthModal
+  onOpenAuthModal,
+  onTracePath,
+  graphNodes = [],
+  redactionMode = false
 }) {
+  const [traceTargetId, setTraceTargetId] = useState("");
+  const [showTracePicker, setShowTracePicker] = useState(false);
+
   if (!isOpen || !entity) return null;
+
+  // T2.3 — PII masking helper: returns masked text + data-masked attr value
+  const mask = (raw, kind) => {
+    if (!redactionMode) return { text: raw, masked: null };
+    if (kind === "phone") return { text: raw, masked: "+91-XXXXX-XXXXX" };
+    if (kind === "bank") return { text: raw, masked: "XXXX-XXXX-XXXX" };
+    if (kind === "address") {
+      const parts = String(raw).split(",");
+      return { text: raw, masked: parts.length > 1 ? `XXXX, ${parts[parts.length - 1].trim()}` : "XXXX-XXXX" };
+    }
+    return { text: raw, masked: "••••••••" };
+  };
 
   const getRiskColor = (score) => {
     if (score >= 85) return "#dc2626";
@@ -31,180 +52,208 @@ export default function InspectorDrawer({
     return "#059669";
   };
 
-  const riskColor = getRiskColor(entity.risk_score);
-  const circumference = 2 * Math.PI * 36;
-  const strokeDashoffset = circumference - (entity.risk_score / 100) * circumference;
+  const isCross = entity.is_cross_jurisdiction || (entity.jurisdictions && entity.jurisdictions.length > 1);
+
+  // T1.1 — Dynamic XAI legal justification (fallback to static legal_justification if present)
+  const legalText =
+    entity.legal_justification ||
+    generateLegalJustification(entity, {
+      betweennessPercentile: Math.round((entity.betweenness || entity.betweenness_score || 0.1) * 100),
+      jurisdictionCount: (entity.states || entity.jurisdictions || []).length || 1,
+      hawalaRiskRatio: 0.72
+    });
+
+  // T1.3 — Isolation Forest anomaly badge
+  const anomalyScore = computeIsolationScore(entity);
 
   return (
-    <aside className="absolute top-0 right-0 w-96 h-full bg-white border-l border-slate-200 shadow-2xl z-30 flex flex-col transition-all duration-300">
+    <aside aria-label="Suspect Dossier Inspector" className="fixed top-14 right-0 bottom-0 w-96 bg-white/95 backdrop-blur-md border-l border-slate-200 shadow-2xl z-30 flex flex-col transition-all duration-300">
       {/* Header */}
-      <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+      <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
         <div className="flex items-center gap-2">
-          <ShieldAlert size={18} className="text-red-600" />
-          <span className="text-xs font-bold tracking-wider text-slate-700 uppercase font-mono">
-            CRIMINAL INTELLIGENCE DOSSIER
-          </span>
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: getRiskColor(entity.risk_score || 50) }}
+          />
+          <h2 className="font-bold text-sm tracking-wide text-slate-800 uppercase font-mono">
+            SUSPECT DOSSIER
+          </h2>
+          {isCross && (
+            <span className="px-1.5 py-0.5 text-[9px] font-bold font-mono bg-purple-100 text-purple-700 border border-purple-200 rounded">
+              INTER-STATE
+            </span>
+          )}
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+          className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 transition"
         >
           <X size={18} />
         </button>
       </div>
 
-      {/* Content Scrollable Body */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-5">
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
         {/* Profile Card */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">{entity.canonical_name}</h2>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
-                {entity.risk_tier} RISK
+        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-bold text-base text-slate-900 leading-tight">
+                {entity.canonical_name || entity.name}
+              </h3>
+              <div className="flex items-center gap-1.5 mt-0.5 text-slate-500 font-mono text-[11px]">
+                <MapPin size={12} />
+                <span>{(entity.states || [entity.state || "Maharashtra"]).join(", ")}</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span
+                className="text-lg font-black font-mono"
+                style={{ color: getRiskColor(entity.risk_score || 50) }}
+              >
+                {entity.risk_score || 50}
               </span>
-              {entity.is_cross_jurisdiction && (
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
-                  <MapPin size={10} /> Multi-State Syndicate
-                </span>
-              )}
+              <div className="text-[9px] font-bold text-slate-400 font-mono uppercase">
+                RISK SCORE
+              </div>
             </div>
           </div>
 
-          {/* Donut Score Gauge */}
-          <div className="relative flex items-center justify-center w-20 h-20">
-            <svg className="w-20 h-20 transform -rotate-90">
-              <circle
-                cx="40"
-                cy="40"
-                r="34"
-                stroke="#e2e8f0"
-                strokeWidth="7"
-                fill="transparent"
-              />
-              <circle
-                cx="40"
-                cy="40"
-                r="34"
-                stroke={riskColor}
-                strokeWidth="7"
-                strokeDasharray={2 * Math.PI * 34}
-                strokeDashoffset={2 * Math.PI * 34 * (1 - entity.risk_score / 100)}
-                strokeLinecap="round"
-                fill="transparent"
-              />
-            </svg>
-            <div className="absolute flex flex-col items-center justify-center text-center">
-              <span className="text-lg font-extrabold text-slate-900 leading-none">
-                {entity.risk_score}
+          {/* Aliases */}
+          {entity.aliases && entity.aliases.length > 0 && (
+            <div className="pt-2 border-t border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block mb-1">
+                Known Aliases
               </span>
-              <span className="text-[9px] font-bold text-slate-400 font-mono uppercase">
-                RISK
-              </span>
+              <div className="flex flex-wrap gap-1">
+                {entity.aliases.map((a, i) => (
+                  <span
+                    key={i}
+                    className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md font-mono text-[10px]"
+                  >
+                    {a}
+                  </span>
+                ))}
+              </div>
             </div>
+          )}
+        </div>
+
+        {/* T4.3 — 3-column Network Centrality Metric Grid */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="metric-box">
+            <span className="metric-val">{Number(entity.betweenness || entity.betweenness_score || 0.05).toFixed(3)}</span>
+            <span className="metric-lbl">Betweenness</span>
+          </div>
+          <div className="metric-box">
+            <span className="metric-val">{entity.degree ?? (entity.associates?.length || 2)}</span>
+            <span className="metric-lbl">Degree</span>
+          </div>
+          <div className="metric-box">
+            <span className="metric-val">{Number(entity.pagerank || 0.04).toFixed(3)}</span>
+            <span className="metric-lbl">PageRank</span>
           </div>
         </div>
 
-        {/* XAI Legal Justification Card */}
-        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
-            <Gavel size={14} className="text-slate-600" />
-            <span>AI Legal Explainability (Sec. 65B Audit)</span>
-          </div>
-          <p className="text-xs text-slate-600 leading-relaxed italic">
-            &ldquo;{entity.legal_justification}&rdquo;
-          </p>
-        </div>
-
-        {/* Known Aliases */}
-        {entity.aliases && entity.aliases.length > 0 && (
-          <div>
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 font-mono">
-              Identified Aliases ({entity.aliases.length})
-            </h4>
-            <div className="flex flex-wrap gap-1.5">
-              {entity.aliases.map((alias, i) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-800 rounded-md border border-slate-200"
-                >
-                  {alias}
-                </span>
-              ))}
+        {/* T1.3 — Isolation Forest Anomaly Badge */}
+        {anomalyScore > 65 && (
+          <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity size={14} className="text-purple-600 animate-pulse" />
+              <span className="font-mono text-[11px] font-bold text-purple-800">
+                Isolation Forest Anomaly
+              </span>
             </div>
+            <span className="font-mono text-xs font-black text-purple-700">
+              {anomalyScore}/100
+            </span>
           </div>
         )}
 
-        {/* Digital & Physical Assets */}
-        <div className="space-y-2.5">
-          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
-            Digital & Physical Corroboration
-          </h4>
-
-          {entity.phones && entity.phones.length > 0 && (
-            <div className="flex items-center gap-2.5 text-xs text-slate-700 p-2 rounded-lg bg-slate-50 border border-slate-100 font-mono">
-              <Phone size={14} className="text-sky-600 shrink-0" />
-              <span>{entity.phones.join(", ")}</span>
-            </div>
-          )}
-
-          {entity.vehicles && entity.vehicles.length > 0 && (
-            <div className="flex items-center gap-2.5 text-xs text-slate-700 p-2 rounded-lg bg-slate-50 border border-slate-100 font-mono">
-              <Car size={14} className="text-amber-600 shrink-0" />
-              <span>{entity.vehicles.join(", ")}</span>
-            </div>
-          )}
-
-          {entity.bank_accounts && entity.bank_accounts.length > 0 && (
-            <div className="flex items-center gap-2.5 text-xs text-slate-700 p-2 rounded-lg bg-slate-50 border border-slate-100 font-mono">
-              <CreditCard size={14} className="text-emerald-600 shrink-0" />
-              <span>{entity.bank_accounts.join(", ")}</span>
-            </div>
-          )}
+        {/* Identifiers */}
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block">
+            Seized Identifiers
+          </span>
+          <div className="space-y-1">
+            {(entity.phones || []).map((p, i) => {
+              const m = mask(p, "phone");
+              return (
+                <div key={i} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg font-mono text-[11px] text-slate-700 border border-slate-100">
+                  <Phone size={13} className="text-sky-600 shrink-0" />
+                  <span data-masked={m.masked}>{m.text}</span>
+                </div>
+              );
+            })}
+            {(entity.vehicles || []).map((v, i) => (
+              <div key={i} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg font-mono text-[11px] text-slate-700 border border-slate-100">
+                <Car size={13} className="text-amber-600 shrink-0" />
+                <span>{v}</span>
+              </div>
+            ))}
+            {(entity.bank_accounts || []).map((b, i) => {
+              const m = mask(b, "bank");
+              return (
+                <div key={i} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg font-mono text-[11px] text-slate-700 border border-slate-100">
+                  <CreditCard size={13} className="text-emerald-600 shrink-0" />
+                  <span data-masked={m.masked}>{m.text}</span>
+                </div>
+              );
+            })}
+            {!entity.phones?.length && !entity.vehicles?.length && !entity.bank_accounts?.length && (
+              <div className="p-2 text-slate-400 font-mono text-[11px] italic">
+                No physical identifiers linked yet.
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Associated FIRs */}
+        {/* FIR Records */}
         {entity.firs && entity.firs.length > 0 && (
-          <div>
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 font-mono">
-              Connected Law Enforcement FIRs ({entity.firs.length})
-            </h4>
-            <div className="space-y-2">
-              {entity.firs.map((fir, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm text-xs space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900 font-mono">{fir.fir_id}</span>
-                    <span className="text-[10px] text-slate-500">{fir.date?.split(" ")[0]}</span>
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block">
+              Registered Chargesheets & FIRs ({entity.firs.length})
+            </span>
+            <div className="space-y-1.5">
+              {entity.firs.map((f, i) => (
+                <div key={i} className="p-2 bg-slate-50 rounded-lg border border-slate-100 text-[11px] space-y-0.5">
+                  <div className="flex items-center justify-between font-mono font-bold text-slate-800">
+                    <span>{f.fir_id}</span>
+                    <span className="text-[10px] text-slate-500">{f.station}</span>
                   </div>
-                  <div className="text-slate-600 font-medium">{fir.crime_type}</div>
-                  <div className="text-[11px] text-slate-400">
-                    {fir.station} • {fir.sections}
-                  </div>
+                  <div className="text-slate-600">{f.crime_type}</div>
+                  <div className="font-mono text-[10px] text-red-600 font-semibold">{f.sections}</div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Network Associates */}
+        {/* Explainable AI (XAI) Justification */}
+        <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-1.5">
+          <div className="flex items-center gap-1.5 text-amber-800 font-mono font-bold text-[11px]">
+            <Gavel size={14} />
+            <span>XAI LEGAL JUSTIFICATION (SEC. 65B)</span>
+          </div>
+          <p className="text-[11px] text-slate-700 leading-relaxed font-sans">
+            {legalText}
+          </p>
+        </div>
+
+        {/* Direct Network Associates */}
         {entity.associates && entity.associates.length > 0 && (
-          <div>
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 font-mono">
-              Direct Associates ({entity.associates.length})
-            </h4>
-            <div className="space-y-1.5">
-              {entity.associates.map((asc, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs"
-                >
-                  <span className="font-medium text-slate-800">{asc.name}</span>
-                  <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    {asc.relation}
-                  </span>
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase font-mono block">
+              Direct Syndicate Associates ({entity.associates.length})
+            </span>
+            <div className="space-y-1">
+              {entity.associates.map((a, i) => (
+                <div key={i} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-100 text-[11px]">
+                  <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                    <Users size={12} className="text-slate-400" />
+                    <span>{a.name}</span>
+                  </div>
+                  <span className="font-mono text-[10px] text-slate-500">{a.relation}</span>
                 </div>
               ))}
             </div>
@@ -221,6 +270,49 @@ export default function InspectorDrawer({
           <ShieldAlert size={14} />
           Simulate Arrest (Tactical Impact)
         </button>
+
+        {/* T5.3 — Multi-hop BFS path tracer */}
+        <button
+          onClick={() => setShowTracePicker((v) => !v)}
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm cursor-pointer"
+        >
+          <Route size={14} />
+          Trace Path (BFS Graph Tracer)
+        </button>
+        {showTracePicker && (
+          <div className="p-2.5 bg-white rounded-xl border border-emerald-200 space-y-2 animate-fadeIn">
+            <label className="text-[10px] font-bold text-slate-500 uppercase font-mono block">
+              Select target node:
+            </label>
+            <select
+              value={traceTargetId}
+              onChange={(e) => setTraceTargetId(e.target.value)}
+              className="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
+            >
+              <option value="">— Choose target —</option>
+              {graphNodes
+                .filter((n) => n.id !== entity.id)
+                .map((n) => (
+                  <option key={n.id} value={n.id}>
+                    {n.canonical_name || n.name || n.label || n.id}
+                  </option>
+                ))}
+            </select>
+            <button
+              onClick={() => {
+                if (traceTargetId && onTracePath) {
+                  onTracePath(entity.id, traceTargetId);
+                  setShowTracePicker(false);
+                }
+              }}
+              disabled={!traceTargetId}
+              className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition disabled:opacity-40"
+            >
+              Compute Shortest Path
+            </button>
+          </div>
+        )}
+
         {currentOfficer?.role === "Analyst" || currentOfficer?.role === "FIELD_INVESTIGATOR" ? (
           <button
             onClick={onOpenAuthModal}

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
 from backend.app.api.v1.router import api_router
+from backend.app.api.match import router as ml_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -19,6 +20,9 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# T1.2 — Real trained Random Forest alias matcher: POST /api/ml/match
+app.include_router(ml_router, prefix="/api/ml", tags=["ML Alias Matching"])
 
 @app.get("/")
 def root():

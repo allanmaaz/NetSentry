@@ -4,42 +4,42 @@
   "training_samples": 3750,
   "test_samples": 1250,
   "metrics": {
-    "accuracy": 99.36,
-    "precision": 98.9,
-    "recall": 99.84,
-    "f1_score": 99.37,
-    "roc_auc": 99.99
+    "accuracy": 99.2,
+    "precision": 99.01,
+    "recall": 99.34,
+    "f1_score": 99.17,
+    "roc_auc": 99.98
   },
   "confusion_matrix": {
-    "true_positive": 630,
-    "false_positive": 7,
-    "true_negative": 612,
-    "false_negative": 1
+    "true_positive": 598,
+    "false_positive": 6,
+    "true_negative": 642,
+    "false_negative": 4
   },
   "feature_importances": [
     {
       "feature": "Token Set Overlap",
-      "weight": 37.9
+      "weight": 37.5
     },
     {
       "feature": "Levenshtein Edit Distance",
-      "weight": 21.5
+      "weight": 21.3
     },
     {
       "feature": "Double Metaphone Phonetic",
-      "weight": 19.1
+      "weight": 19.4
     },
     {
       "feature": "Shared Telecom MSISDN",
-      "weight": 13.1
+      "weight": 13.5
     },
     {
       "feature": "Shared Vehicle Plate",
-      "weight": 5.5
+      "weight": 5.9
     },
     {
       "feature": "Shared Bank Account",
-      "weight": 2.8
+      "weight": 2.3
     }
   ],
   "roc_curve": [
@@ -49,54 +49,54 @@
     },
     {
       "fpr": 0.0,
-      "tpr": 0.702
+      "tpr": 0.699
     },
     {
       "fpr": 0.0,
-      "tpr": 0.769
+      "tpr": 0.771
     },
     {
       "fpr": 0.0,
-      "tpr": 0.818
+      "tpr": 0.809
     },
     {
       "fpr": 0.0,
-      "tpr": 0.854
+      "tpr": 0.836
     },
     {
       "fpr": 0.0,
-      "tpr": 0.876
+      "tpr": 0.87
     },
     {
       "fpr": 0.0,
-      "tpr": 0.913
+      "tpr": 0.902
     },
     {
       "fpr": 0.0,
-      "tpr": 0.965
+      "tpr": 0.925
     },
     {
       "fpr": 0.003,
-      "tpr": 0.992
+      "tpr": 0.978
+    },
+    {
+      "fpr": 0.006,
+      "tpr": 0.993
     },
     {
       "fpr": 0.031,
       "tpr": 1.0
     },
     {
-      "fpr": 0.079,
+      "fpr": 0.069,
       "tpr": 1.0
     },
     {
-      "fpr": 0.129,
+      "fpr": 0.105,
       "tpr": 1.0
     },
     {
-      "fpr": 0.174,
-      "tpr": 1.0
-    },
-    {
-      "fpr": 0.226,
+      "fpr": 0.157,
       "tpr": 1.0
     },
     {
