@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   X,
   ShieldAlert,
@@ -10,7 +10,9 @@ import {
   Users,
   ExternalLink,
   MapPin,
-  Lock
+  Lock,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 
 export default function InspectorDrawer({
@@ -22,6 +24,9 @@ export default function InspectorDrawer({
   currentOfficer,
   onOpenAuthModal
 }) {
+  // R4 — mobile sheet expand/collapse (hooks before early return)
+  const [sheetExpanded, setSheetExpanded] = useState(false);
+
   if (!isOpen || !entity) return null;
 
   const getRiskColor = (score) => {
@@ -36,29 +41,45 @@ export default function InspectorDrawer({
   const strokeDashoffset = circumference - (entity.risk_score / 100) * circumference;
 
   return (
-    <aside className="absolute top-0 right-0 w-96 h-full bg-white border-l border-slate-200 shadow-2xl z-30 flex flex-col transition-all duration-300">
+    <>
+      {/* R4 — backdrop scrim on phones/tablets */}
+      <div className="sheet-backdrop lg:hidden" onClick={onClose} />
+      {/* R4 — bottom sheet on <lg, side drawer on lg+ */}
+      <aside className={`absolute z-30 flex flex-col bg-white shadow-2xl transition-all duration-300 max-lg:left-2 max-lg:right-2 max-lg:bottom-[74px] max-lg:top-auto max-lg:rounded-2xl max-lg:border max-lg:border-slate-200 max-lg:overflow-hidden ${sheetExpanded ? "max-lg:max-h-[78dvh]" : "max-lg:max-h-[48dvh]"} lg:top-0 lg:right-0 lg:w-96 lg:h-full lg:border-l lg:border-slate-200`}>
+      {/* R4 — drag handle (visual) on phones/tablets */}
+      <div className="sheet-handle lg:hidden" onClick={() => setSheetExpanded((v) => !v)} />
       {/* Header */}
       <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
-        <div className="flex items-center gap-2">
-          <ShieldAlert size={18} className="text-red-600" />
-          <span className="text-xs font-bold tracking-wider text-slate-700 uppercase font-mono">
+        <div className="flex items-center gap-2 min-w-0">
+          <ShieldAlert size={18} className="text-red-600 shrink-0" />
+          <span className="text-xs font-bold tracking-wider text-slate-700 uppercase font-mono truncate">
             CRIMINAL INTELLIGENCE DOSSIER
           </span>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {/* R4 — expand/collapse on phones/tablets */}
+          <button
+            onClick={() => setSheetExpanded((v) => !v)}
+            className="lg:hidden p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+            aria-label={sheetExpanded ? "Collapse panel" : "Expand panel"}
+          >
+            {sheetExpanded ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+          </button>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Content Scrollable Body */}
       <div className="flex-1 overflow-y-auto p-5 space-y-5">
         {/* Profile Card */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">{entity.canonical_name}</h2>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-slate-900 break-words">{entity.canonical_name}</h2>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
                 {entity.risk_tier} RISK
@@ -216,7 +237,7 @@ export default function InspectorDrawer({
       <div className="p-4 border-t border-slate-200 bg-slate-50/70 space-y-2">
         <button
           onClick={() => onSimulateArrest && onSimulateArrest(entity.id)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-2 max-lg:py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm cursor-pointer max-lg:min-h-[44px]"
         >
           <ShieldAlert size={14} />
           Simulate Arrest (Tactical Impact)
@@ -233,7 +254,7 @@ export default function InspectorDrawer({
         ) : (
           <button
             onClick={() => onOpenDossier(entity)}
-            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition shadow-sm cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2 max-lg:py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition shadow-sm cursor-pointer max-lg:min-h-[44px]"
           >
             <FileText size={14} />
             Export Court Dossier (Section 65B)
@@ -241,5 +262,6 @@ export default function InspectorDrawer({
         )}
       </div>
     </aside>
+    </>
   );
 }
