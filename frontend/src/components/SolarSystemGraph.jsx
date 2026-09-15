@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import * as d3 from "d3";
 import { ZoomIn, ZoomOut, Compass, RefreshCw } from "lucide-react";
+import { matchesDept, jurisdictionCount } from "../services/deptFilter";
 
 // Canvas Vector Icon Renderers (Crisp, High-DPI, Zero-Lag)
 function drawPersonIcon(ctx, x, y, size, color = "#ffffff") {
@@ -96,7 +97,8 @@ export default function SolarSystemGraph({
   filterState,
   filterTier,
   neutralizedNodeId = null,
-  timeProgress = 100
+  timeProgress = 100,
+  tracedPath = []
 }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -108,6 +110,9 @@ export default function SolarSystemGraph({
   const timeProgressRef = useRef(timeProgress);
   const hoveredNodeRef = useRef(null);
   const renderRef = useRef(null);
+  const tracedPathRef = useRef(tracedPath);
+  const spawnedAtRef = useRef(new Map()); // T5.1 — spawn pulse timestamps
+  const knownIdsRef = useRef(new Set());
 
   const [hoveredNodeState, setHoveredNodeState] = useState(null);
 
@@ -126,6 +131,11 @@ export default function SolarSystemGraph({
     timeProgressRef.current = timeProgress;
     if (renderRef.current) renderRef.current();
   }, [timeProgress]);
+
+  useEffect(() => {
+    tracedPathRef.current = tracedPath;
+    if (renderRef.current) renderRef.current();
+  }, [tracedPath]);
 
 
   // Color Palette
@@ -176,14 +186,22 @@ export default function SolarSystemGraph({
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr, dpr);
 
-    // Filter nodes
+    // Filter nodes — T2.4: non-matching nodes are DIMMED to 10% opacity, not removed
     const filteredNodes = data.nodes
       .filter((n) => {
         if (filterTier !== "all" && n.risk_tier !== filterTier) return false;
-        if (filterState !== "all" && n.state !== filterState) return false;
         return true;
       })
-      .map((d) => ({ ...d }));
+      .map((d) => ({ ...d, _dimmed: !matchesDept(d, filterState) }));
+
+    // T5.1 — track newly spawned nodes for glowing orbital-insertion pulse
+    const now = Date.now();
+    filteredNodes.forEach((n) => {
+      if (!knownIdsRef.current.has(n.id)) {
+        knownIdsRef.current.add(n.id);
+        spawnedAtRef.current.set(n.id, now);
+      }
+    });
 
     const nodeMap = new Map(filteredNodes.map((n) => [n.id, n]));
 
@@ -301,6 +319,11 @@ export default function SolarSystemGraph({
         ctx.moveTo(link.source.x, link.source.y);
         ctx.lineTo(link.target.x, link.target.y);
 
+        // T2.4 — dim links touching dimmed nodes to 10% opacity
+        const linkDimmed = link.source._dimmed || link.target._dimmed;
+        ctx.save();
+        if (linkDimmed) ctx.globalAlpha = 0.1;
+
         if (link.type === "TRANSFERRED_FUNDS") {
           ctx.strokeStyle = colors.edgeFunds;
           ctx.lineWidth = 2.2;
@@ -316,7 +339,46 @@ export default function SolarSystemGraph({
         }
         ctx.stroke();
         ctx.setLineDash([]);
+        ctx.restore(); // T2.4 link dim restore
       });
+
+      // T5.3 — Glowing green BFS path trace overlay
+      const traceIds = tracedPathRef.current || [];
+      if (traceIds.length >= 2) {
+        const traceMap = new Map(nodesRef.current.map((n) => [n.id, n]));
+        ctx.save();
+        ctx.shadowColor = "rgba(16, 185, 129, 0.9)";
+        ctx.shadowBlur = 14;
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        let started = false;
+        traceIds.forEach((id) => {
+          const n = traceMap.get(id);
+          if (!n) return;
+          if (!started) { ctx.moveTo(n.x, n.y); started = true; }
+          else ctx.lineTo(n.x, n.y);
+        });
+        ctx.stroke();
+        ctx.restore();
+        // Hop markers
+        traceIds.forEach((id, idx) => {
+          const n = traceMap.get(id);
+          if (!n || !isNodeVisible(n)) return;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(n.x, n.y - 26, 9, 0, 2 * Math.PI);
+          ctx.fillStyle = "#059669";
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 9px 'JetBrains Mono', monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(String(idx), n.x, n.y - 23);
+          ctx.restore();
+        });
+      }
 
       // 4. Draw Nodes / Celestial Planets
       nodesRef.current.forEach((node) => {
@@ -326,6 +388,25 @@ export default function SolarSystemGraph({
         const isSelected = selectedNodeIdRef.current === node.id;
         const isHovered = hoveredNodeRef.current && hoveredNodeRef.current.id === node.id;
         const radius = isSun ? 32 : node.radius || 15;
+        // T2.4 — dim non-matching department nodes to 10% opacity
+        const dimmed = node._dimmed === true;
+
+        ctx.save();
+        if (dimmed) ctx.globalAlpha = 0.1;
+
+        // T5.1 — Glowing spawn pulse for newly inserted nodes (1.6s)
+        const spawnAge = Date.now() - (spawnedAtRef.current.get(node.id) || 0);
+        if (spawnAge < 1600) {
+          const pulseR = radius + 10 + (spawnAge / 1600) * 26;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, pulseR, 0, 2 * Math.PI);
+          ctx.strokeStyle = `rgba(16, 185, 129, ${0.85 * (1 - spawnAge / 1600)})`;
+          ctx.lineWidth = 4;
+          ctx.shadowColor = "rgba(16, 185, 129, 0.8)";
+          ctx.shadowBlur = 18;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
 
         // Radiant Sun Corona Glow
         if (isSun) {
@@ -431,6 +512,38 @@ export default function SolarSystemGraph({
           ctx.fillStyle = "#dc2626";
           ctx.fillText("[KINGPIN // SUN]", node.x, node.y + radius + 27);
         }
+
+        // T4.4 — Jurisdiction badge (🏛 n) + purple halo for cross-jurisdiction nodes
+        const jCount = jurisdictionCount(node);
+        if (jCount >= 2) {
+          const bx = node.x + radius * 0.75;
+          const by = node.y - radius * 0.85;
+          // Glowing purple halo ring (dashed)
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius + 5, 0, 2 * Math.PI);
+          ctx.strokeStyle = "rgba(124, 58, 237, 0.55)";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([3, 3]);
+          ctx.shadowColor = "rgba(124, 58, 237, 0.7)";
+          ctx.shadowBlur = 10;
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.shadowBlur = 0;
+          // Purple count badge
+          ctx.beginPath();
+          ctx.arc(bx, by, 9, 0, 2 * Math.PI);
+          ctx.fillStyle = "#7c3aed";
+          ctx.fill();
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 9px 'JetBrains Mono', monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(String(jCount), bx, by + 3);
+        }
+
+        ctx.restore(); // T2.4 dim restore
       });
 
       ctx.restore();
@@ -438,6 +551,19 @@ export default function SolarSystemGraph({
 
     renderRef.current = render;
     render();
+
+    // T5.1 — animate spawn pulses (~1.6s of re-renders after new nodes appear)
+    const hasFreshSpawn = filteredNodes.some(
+      (n) => Date.now() - (spawnedAtRef.current.get(n.id) || 0) < 1600
+    );
+    if (hasFreshSpawn) {
+      let frames = 0;
+      const pulseTimer = setInterval(() => {
+        if (renderRef.current) renderRef.current();
+        frames += 1;
+        if (frames > 24) clearInterval(pulseTimer);
+      }, 70);
+    }
 
     // Zoom setup
     const zoom = d3
@@ -503,7 +629,7 @@ export default function SolarSystemGraph({
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("click", handleClick);
     };
-  }, [data, filterState, filterTier]); // NOTICE: selectedNodeId removed from deps to eliminate jumping!
+  }, [data, filterState, filterTier, tracedPath]); // NOTICE: selectedNodeId removed from deps to eliminate jumping!
 
   // Controls
   const handleZoom = (factor) => {

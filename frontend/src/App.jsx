@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "./components/Header";
 import SolarSystemGraph from "./components/SolarSystemGraph";
 import Galaxy3DGraph from "./components/Galaxy3DGraph";
@@ -10,6 +10,8 @@ import TacticalSimModal from "./components/TacticalSimModal";
 import LiveIngestModal from "./components/LiveIngestModal";
 import ModelMetricsModal from "./components/ModelMetricsModal";
 import UploadDatasetModal from "./components/UploadDatasetModal";
+import LoginOverlay from "./components/LoginOverlay";
+import AuditLogPanel from "./components/AuditLogPanel";
 import {
   fetchGraph,
   fetchEntityDetail,
@@ -18,6 +20,17 @@ import {
   reloadDatasets,
   simulateArrest
 } from "./services/api";
+import { bfsShortestPath, pathNodeNames } from "./services/pathFinder";
+
+// T3.1 — audit log persistence key
+const AUDIT_KEY = "netsentry_audit_log";
+const loadAuditLog = () => {
+  try {
+    return JSON.parse(localStorage.getItem(AUDIT_KEY) || "[]");
+  } catch {
+    return [];
+  }
+};
 
 export default function App() {
   const [graphData, setGraphData] = useState(null);
@@ -43,9 +56,70 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState(null);
 
+  // T3.2 — RBAC officer session (sessionStorage)
+  const [officer, setOfficer] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem("netsentry_officer");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // T2.3 — PII redaction mode
+  const [redactionMode, setRedactionMode] = useState(false);
+
+  // T3.1 — Immutable audit trail (localStorage)
+  const [auditLog, setAuditLog] = useState(loadAuditLog);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const officerRef = useRef(officer);
+  officerRef.current = officer;
+
+  // T5.3 — BFS traced path state
+  const [tracedPath, setTracedPath] = useState([]);
+
+  // T4.7 — View transition state (300ms fade-out → fade-in)
+  const [viewTransitioning, setViewTransitioning] = useState(false);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // T3.1 — append audit entry: [ISO timestamp] [Officer / Role] [Action] [Target]
+  const logAudit = (action, target, actionType = "node_click") => {
+    const off = officerRef.current;
+    const entry = {
+      timestamp: new Date().toISOString(),
+      officerName: off?.name || "Unknown",
+      officerRole: off?.role || "—",
+      action,
+      target,
+      actionType
+    };
+    setAuditLog((prev) => {
+      const next = [...prev, entry];
+      try {
+        localStorage.setItem(AUDIT_KEY, JSON.stringify(next));
+      } catch (e) {
+        console.warn("audit persist failed:", e);
+      }
+      return next;
+    });
+  };
+
+  const handleExportAudit = () => {
+    const lines = auditLog
+      .slice()
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .map((e) => `[${e.timestamp}] [${e.officerName} / ${e.officerRole}] [${e.action}] [${e.target}]`);
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "netsentry_audit_log.txt";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const loadData = async () => {
@@ -55,11 +129,23 @@ export default function App() {
         fetchGraph(),
         fetchPendingResolutions()
       ]);
-      setGraphData(gData);
+      // T4.2 — merge locally persisted ingested nodes so they survive refresh
+      let merged = gData;
+      try {
+        const local = JSON.parse(localStorage.getItem("netsentry_ingested_nodes") || "[]");
+        if (local.length > 0 && gData?.nodes) {
+          const ids = new Set(gData.nodes.map((n) => n.id));
+          const fresh = local.filter((n) => !ids.has(n.id));
+          merged = { ...gData, nodes: [...gData.nodes, ...fresh] };
+        }
+      } catch (e) {
+        console.warn("ingested nodes restore failed:", e);
+      }
+      setGraphData(merged);
       setPendingResolutions(pData || []);
 
       // Auto-select Kingpin on initial load
-      const kingpinNode = gData?.nodes?.find((n) => n.orbit_level === 0) || gData?.nodes?.[0];
+      const kingpinNode = merged?.nodes?.find((n) => n.orbit_level === 0) || merged?.nodes?.[0];
       if (kingpinNode) {
         setSelectedNodeId(kingpinNode.id);
         const detail = await fetchEntityDetail(kingpinNode.id);
@@ -77,12 +163,32 @@ export default function App() {
     loadData();
   }, []);
 
+  // T3.1 — keyboard shortcut "A" toggles audit panel
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.key === "a" || e.key === "A") && !e.ctrlKey && !e.metaKey) {
+        const tag = (e.target?.tagName || "").toLowerCase();
+        if (tag === "input" || tag === "textarea" || tag === "select") return;
+        setIsAuditOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const handleLogin = (off) => {
+    setOfficer(off);
+    logAudit("OFFICER_LOGIN", `${off.name}`, "login");
+    showToast(`Welcome, ${off.name} (${off.role}). Session bound to Section 65B audit.`);
+  };
+
   const handleSelectNode = async (nodeId) => {
     setSelectedNodeId(nodeId);
     try {
       const detail = await fetchEntityDetail(nodeId);
       setEntityDetail(detail);
       setIsInspectorOpen(true);
+      logAudit("NODE_INSPECT", detail?.canonical_name || nodeId, "node_click");
     } catch (err) {
       console.error("Failed to fetch entity details:", err);
     }
@@ -91,6 +197,7 @@ export default function App() {
   const handleResolve = async (candidateId, action) => {
     try {
       const res = await submitResolutionDecision(candidateId, action);
+      logAudit(action === "MERGE" ? "HITL_CONFIRM_MERGE" : "HITL_REJECT_MATCH", candidateId, "hitl");
       showToast(`Adjudication confirmed: ${action} successfully committed to database.`);
       // Reload graph and pending list from database
       const [gData, pData] = await Promise.all([
@@ -122,8 +229,14 @@ export default function App() {
   };
 
   const handleOpenDossier = (entity) => {
+    // T3.2 — Analyst role locked out of Section 65B export
+    if (officer?.role === "Analyst") {
+      showToast("Section 65B Export locked for Analyst role — Supervisory Officer required.");
+      return;
+    }
     setDossierEntity(entity);
     setIsDossierOpen(true);
+    logAudit("65B_DOSSIER_EXPORT", entity?.canonical_name || entity?.id, "export");
   };
 
   const handleSimulateArrest = async (nodeId) => {
@@ -132,6 +245,7 @@ export default function App() {
       const sim = await simulateArrest(nodeId);
       setTacticalResult(sim);
       setIsTacticalModalOpen(true);
+      logAudit("ARREST_SIMULATION", sim?.neutralized_target?.name || nodeId, "arrest");
     } catch (err) {
       console.error("Failed to simulate arrest:", err);
       showToast("Arrest simulation failed.");
@@ -141,14 +255,55 @@ export default function App() {
   const handleApplyNeutralize = (nodeId) => {
     setNeutralizedNodeId(nodeId);
     setIsTacticalModalOpen(false);
+    logAudit("TARGET_NEUTRALIZED", nodeId, "arrest");
     showToast(`Tactical neutralization confirmed: Target marked as ARRESTED. Network routes severed.`);
   };
 
   const handleIngestSuccess = (newNode) => {
     if (!newNode) return;
+    // T4.2 — persist ingested node in localStorage so it survives refresh
+    try {
+      const existing = JSON.parse(localStorage.getItem("netsentry_ingested_nodes") || "[]");
+      existing.push(newNode);
+      localStorage.setItem("netsentry_ingested_nodes", JSON.stringify(existing));
+    } catch (e) {
+      console.warn("ingested persist failed:", e);
+    }
+    logAudit("FIR_INGEST_SPAWN", newNode.name || newNode.id, "ingest");
     loadData();
     showToast(`Live FIR narrative ingested: '${newNode.name}' committed to database.`);
   };
+
+  // T5.3 — BFS shortest path trace handler
+  const handleTracePath = (sourceId, targetId) => {
+    const nodes = graphData?.nodes || [];
+    const edges = graphData?.edges || graphData?.links || [];
+    const path = bfsShortestPath(nodes, edges, sourceId, targetId);
+    if (!path) {
+      showToast("No connected path found between the selected nodes.");
+      setTracedPath([]);
+      return;
+    }
+    setTracedPath(path);
+    const names = pathNodeNames(path, nodes);
+    logAudit("BFS_PATH_TRACE", `${names[0]} → ${names[names.length - 1]} (${path.length - 1} hops)`, "node_click");
+    showToast(`Path traced: ${path.length - 1} hop(s) — ${names.join(" → ")}`);
+  };
+
+  // T4.7 — view switch with 300ms fade-out → fade-in
+  const handleViewModeChange = (mode) => {
+    if (mode === viewMode) return;
+    setViewTransitioning(true);
+    setTimeout(() => {
+      setViewMode(mode);
+      setViewTransitioning(false);
+    }, 300);
+  };
+
+  // T3.2 — login gate: full-screen overlay until authenticated
+  if (!officer) {
+    return <LoginOverlay onLogin={handleLogin} />;
+  }
 
   return (
     <div className="flex flex-col w-screen h-screen overflow-hidden bg-slate-100 select-none">
@@ -167,35 +322,77 @@ export default function App() {
         onOpenUploadCsv={() => setIsUploadModalOpen(true)}
         isLoading={isLoading}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={handleViewModeChange}
+        redactionMode={redactionMode}
+        onToggleRedaction={() => setRedactionMode((v) => !v)}
+        officer={officer}
+        onOpenAudit={() => setIsAuditOpen((v) => !v)}
+        userRole={officer?.role}
       />
 
       {/* Main Solar System Graph Workspace */}
       <main id="graph-workspace" className="relative flex-1 w-full h-full overflow-hidden">
         {isLoading && !graphData ? (
-          <div className="flex items-center justify-center w-full h-full text-slate-500 font-mono text-sm">
-            Connecting to NetSentry Intelligence Database...
+          <div className="flex flex-col items-center justify-center w-full h-full gap-4">
+            {/* T4.7 — skeleton loader while graph initializes */}
+            <div className="skeleton-loader">
+              <div className="skeleton-circle"></div>
+              <div className="skeleton-circle"></div>
+              <div className="skeleton-circle"></div>
+              <div className="skeleton-circle"></div>
+              <div className="skeleton-circle"></div>
+            </div>
+            <div className="text-slate-500 font-mono text-sm">
+              Connecting to NetSentry Intelligence Database...
+            </div>
           </div>
-        ) : viewMode === "3d" ? (
-          <Galaxy3DGraph
-            data={graphData}
-            selectedNodeId={selectedNodeId}
-            onSelectNode={handleSelectNode}
-            filterState={filterState}
-            filterTier={filterTier}
-            neutralizedNodeId={neutralizedNodeId}
-            timeProgress={timelineProgress}
-          />
         ) : (
-          <SolarSystemGraph
-            data={graphData}
-            selectedNodeId={selectedNodeId}
-            onSelectNode={handleSelectNode}
-            filterState={filterState}
-            filterTier={filterTier}
-            neutralizedNodeId={neutralizedNodeId}
-            timeProgress={timelineProgress}
-          />
+          <div className={`w-full h-full ${viewTransitioning ? "view-transition-out" : "view-transition-in"}`}>
+            {viewMode === "3d" ? (
+              <Galaxy3DGraph
+                data={graphData}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={handleSelectNode}
+                filterState={filterState}
+                filterTier={filterTier}
+                neutralizedNodeId={neutralizedNodeId}
+                timeProgress={timelineProgress}
+              />
+            ) : (
+              <SolarSystemGraph
+                data={graphData}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={handleSelectNode}
+                filterState={filterState}
+                filterTier={filterTier}
+                neutralizedNodeId={neutralizedNodeId}
+                timeProgress={timelineProgress}
+                tracedPath={tracedPath}
+              />
+            )}
+          </div>
+        )}
+
+        {/* T5.3 — BFS path summary panel (hop count + intermediate nodes) */}
+        {tracedPath.length >= 2 && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-xl w-[90%]">
+            <div className="path-summary-panel shadow-xl animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-emerald-800 font-mono">
+                  BFS PATH TRACE • {tracedPath.length - 1} HOP{tracedPath.length - 1 === 1 ? "" : "S"}
+                </span>
+                <button
+                  onClick={() => setTracedPath([])}
+                  className="text-[11px] font-bold text-slate-500 hover:text-slate-800 font-mono"
+                >
+                  ✕ CLEAR
+                </button>
+              </div>
+              <div className="mt-1.5 text-xs text-slate-700 font-mono leading-relaxed">
+                {pathNodeNames(tracedPath, graphData?.nodes || []).join("  →  ")}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Temporal Timeline Playback Scrubber */}
@@ -208,6 +405,17 @@ export default function App() {
           onClose={() => setIsInspectorOpen(false)}
           onOpenDossier={handleOpenDossier}
           onSimulateArrest={handleSimulateArrest}
+          onTracePath={handleTracePath}
+          graphNodes={graphData?.nodes || []}
+          redactionMode={redactionMode}
+        />
+
+        {/* T3.1 — Slide-out audit trail panel */}
+        <AuditLogPanel
+          entries={auditLog}
+          isOpen={isAuditOpen}
+          onClose={() => setIsAuditOpen(false)}
+          onExport={handleExportAudit}
         />
 
         {/* Bottom HITL Review Queue */}
@@ -216,6 +424,7 @@ export default function App() {
             candidates={pendingResolutions}
             onResolve={handleResolve}
             isProcessing={isLoading}
+            userRole={officer?.role}
           />
         </div>
 

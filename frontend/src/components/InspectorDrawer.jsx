@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   X,
   ShieldAlert,
@@ -9,7 +9,9 @@ import {
   FileText,
   Users,
   ExternalLink,
-  MapPin
+  MapPin,
+  Route,
+  Activity
 } from "lucide-react";
 
 export default function InspectorDrawer({
@@ -17,9 +19,27 @@ export default function InspectorDrawer({
   isOpen,
   onClose,
   onOpenDossier,
-  onSimulateArrest
+  onSimulateArrest,
+  onTracePath,
+  graphNodes = [],
+  redactionMode = false
 }) {
+  const [traceTargetId, setTraceTargetId] = useState("");
+  const [showTracePicker, setShowTracePicker] = useState(false);
+
   if (!isOpen || !entity) return null;
+
+  // T2.3 — PII masking helper: returns masked text + data-masked attr value
+  const mask = (raw, kind) => {
+    if (!redactionMode) return { text: raw, masked: null };
+    if (kind === "phone") return { text: raw, masked: "+91-XXXXX-XXXXX" };
+    if (kind === "bank") return { text: raw, masked: "XXXX-XXXX-XXXX" };
+    if (kind === "address") {
+      const parts = String(raw).split(",");
+      return { text: raw, masked: parts.length > 1 ? `XXXX, ${parts[parts.length - 1].trim()}` : "XXXX-XXXX" };
+    }
+    return { text: raw, masked: "••••••••" };
+  };
 
   const getRiskColor = (score) => {
     if (score >= 85) return "#dc2626";
@@ -27,6 +47,18 @@ export default function InspectorDrawer({
     if (score >= 50) return "#0284c7";
     return "#059669";
   };
+
+  // T1.3 — Isolation Forest anomaly score badge (red/orange/green)
+  const anomalyScore = entity.anomaly_score ?? entity.anomalyScore ?? null;
+  const anomalyClass =
+    anomalyScore == null ? null
+    : anomalyScore >= 70 ? "critical"
+    : anomalyScore >= 40 ? "elevated"
+    : "normal";
+  const anomalyLabel =
+    anomalyScore == null ? null
+    : anomalyScore >= 70 ? "ANOMALY"
+    : anomalyScore >= 40 ? "WATCH" : "NOMINAL";
 
   const riskColor = getRiskColor(entity.risk_score);
   const circumference = 2 * Math.PI * 36;
@@ -63,6 +95,12 @@ export default function InspectorDrawer({
               {entity.is_cross_jurisdiction && (
                 <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
                   <MapPin size={10} /> Multi-State Syndicate
+                </span>
+              )}
+              {/* T1.3 — Isolation Forest anomaly score badge */}
+              {anomalyScore != null && (
+                <span className={`anomaly-badge ${anomalyClass}`} title="Isolation Forest anomaly score (0-100)">
+                  <Activity size={10} /> {anomalyLabel} {anomalyScore}
                 </span>
               )}
             </div>
@@ -113,6 +151,32 @@ export default function InspectorDrawer({
           </p>
         </div>
 
+        {/* T4.3 — 3-column centrality stat grid */}
+        <div className="stat-grid">
+          <div className="stat-grid-card">
+            <div className="stat-grid-label">Betweenness</div>
+            <div className="stat-grid-value">
+              {entity.betweenness_score != null
+                ? `${Math.round(entity.betweenness_score * 100)}%`
+                : entity.betweenness != null
+                  ? `${Math.round(entity.betweenness * 100)}%`
+                  : "—"}
+            </div>
+          </div>
+          <div className="stat-grid-card">
+            <div className="stat-grid-label">Degree</div>
+            <div className="stat-grid-value">
+              {entity.degree_centrality ?? entity.degree ?? entity.associates?.length ?? "—"}
+            </div>
+          </div>
+          <div className="stat-grid-card">
+            <div className="stat-grid-label">PageRank</div>
+            <div className="stat-grid-value">
+              {entity.pagerank != null ? `${Math.round(entity.pagerank * 100)}/100` : "—"}
+            </div>
+          </div>
+        </div>
+
         {/* Known Aliases */}
         {entity.aliases && entity.aliases.length > 0 && (
           <div>
@@ -141,7 +205,12 @@ export default function InspectorDrawer({
           {entity.phones && entity.phones.length > 0 && (
             <div className="flex items-center gap-2.5 text-xs text-slate-700 p-2 rounded-lg bg-slate-50 border border-slate-100 font-mono">
               <Phone size={14} className="text-sky-600 shrink-0" />
-              <span>{entity.phones.join(", ")}</span>
+              <span
+                className={redactionMode ? "redacted redaction-activate" : ""}
+                data-masked={mask(entity.phones.join(", "), "phone").masked || undefined}
+              >
+                {mask(entity.phones.join(", "), "phone").text}
+              </span>
             </div>
           )}
 
@@ -155,7 +224,12 @@ export default function InspectorDrawer({
           {entity.bank_accounts && entity.bank_accounts.length > 0 && (
             <div className="flex items-center gap-2.5 text-xs text-slate-700 p-2 rounded-lg bg-slate-50 border border-slate-100 font-mono">
               <CreditCard size={14} className="text-emerald-600 shrink-0" />
-              <span>{entity.bank_accounts.join(", ")}</span>
+              <span
+                className={redactionMode ? "redacted redaction-activate" : ""}
+                data-masked={mask(entity.bank_accounts.join(", "), "bank").masked || undefined}
+              >
+                {mask(entity.bank_accounts.join(", "), "bank").text}
+              </span>
             </div>
           )}
         </div>
@@ -218,6 +292,47 @@ export default function InspectorDrawer({
           <ShieldAlert size={14} />
           Simulate Arrest (Tactical Impact)
         </button>
+        {/* T5.3 — Multi-hop BFS path tracer */}
+        <button
+          onClick={() => setShowTracePicker((v) => !v)}
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm"
+        >
+          <Route size={14} />
+          Trace Path (BFS Graph Tracer)
+        </button>
+        {showTracePicker && (
+          <div className="p-2.5 bg-white rounded-xl border border-emerald-200 space-y-2 animate-fadeIn">
+            <label className="text-[10px] font-bold text-slate-500 uppercase font-mono block">
+              Select target node:
+            </label>
+            <select
+              value={traceTargetId}
+              onChange={(e) => setTraceTargetId(e.target.value)}
+              className="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
+            >
+              <option value="">— Choose target —</option>
+              {graphNodes
+                .filter((n) => n.id !== entity.id)
+                .map((n) => (
+                  <option key={n.id} value={n.id}>
+                    {n.canonical_name || n.name || n.label || n.id}
+                  </option>
+                ))}
+            </select>
+            <button
+              onClick={() => {
+                if (traceTargetId && onTracePath) {
+                  onTracePath(entity.id, traceTargetId);
+                  setShowTracePicker(false);
+                }
+              }}
+              disabled={!traceTargetId}
+              className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition disabled:opacity-40"
+            >
+              Compute Shortest Path
+            </button>
+          </div>
+        )}
         <button
           onClick={() => onOpenDossier(entity)}
           className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition shadow-sm"

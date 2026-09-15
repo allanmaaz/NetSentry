@@ -1,6 +1,23 @@
-import React from "react";
-import { Shield, RefreshCw, Cpu, PlusCircle, UploadCloud, Orbit, Box } from "lucide-react";
+import React, { useState } from "react";
+import { Shield, RefreshCw, Cpu, PlusCircle, UploadCloud, Orbit, Box, Lock, LockOpen, ScrollText } from "lucide-react";
 import GlobalSearchBar from "./GlobalSearchBar";
+
+// T2.4 — Department/agency filter chips
+const DEPT_FILTERS = [
+  { key: "all", label: "ALL" },
+  { key: "MH_POLICE", label: "MH_POLICE" },
+  { key: "KA_POLICE", label: "KA_POLICE" },
+  { key: "DL_STF", label: "DL_STF" },
+  { key: "NIA", label: "NIA" },
+  { key: "NCB", label: "NCB" }
+];
+
+// T3.2 — Role badge colors
+const ROLE_STYLES = {
+  Analyst: "bg-sky-50 text-sky-700 border-sky-200",
+  "Supervisory Officer": "bg-amber-50 text-amber-700 border-amber-200",
+  "System Admin": "bg-purple-50 text-purple-700 border-purple-200"
+};
 
 export default function Header({
   nodes,
@@ -16,7 +33,12 @@ export default function Header({
   onOpenUploadCsv,
   isLoading,
   viewMode = "2d",
-  onViewModeChange
+  onViewModeChange,
+  redactionMode = false,
+  onToggleRedaction,
+  officer = null,
+  onOpenAudit,
+  userRole = null
 }) {
   const kingpinNode = nodes?.find((n) => n.orbit_level === 0) || nodes?.[0];
   const kingpinName = kingpinNode?.name || "Abdul Karim Telgi";
@@ -33,15 +55,25 @@ export default function Header({
             <h1 className="text-base font-extrabold tracking-tight text-slate-900 font-mono">
               NETSENTRY
             </h1>
-            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              AIR-GAPPED LIVE
+            {/* T5.5 — Real-time collaboration indicator */}
+            <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="live-dot"></span>
+              LIVE • 3 Officers Online
             </span>
           </div>
           <p className="text-[11px] text-slate-500 font-medium">
             Cross-Jurisdiction Syndicate Intelligence Platform
           </p>
         </div>
+        {/* T3.2 — Officer name + role badge after login */}
+        {officer && (
+          <div className="hidden lg:flex items-center gap-1.5 ml-2 pl-3 border-l border-slate-200">
+            <span className="text-[11px] font-bold text-slate-800">{officer.name}</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${ROLE_STYLES[officer.role] || ROLE_STYLES.Analyst}`}>
+              {officer.role}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Global Multilingual Search Bar */}
@@ -99,16 +131,51 @@ export default function Header({
           </button>
         </div>
 
-        {/* State Filter */}
+        {/* T2.4 — Department/agency filter chip row */}
+        <div className="filter-chip-row hidden lg:flex" title="Filter by department / agency">
+          {DEPT_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => onFilterStateChange && onFilterStateChange(f.key)}
+              className={`filter-chip ${filterState === f.key ? "active" : ""}`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        {/* Fallback select for small screens */}
         <select
           value={filterState}
           onChange={(e) => onFilterStateChange(e.target.value)}
-          className="text-xs font-medium px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 outline-none hover:bg-slate-100 transition cursor-pointer"
+          className="lg:hidden text-xs font-medium px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 outline-none hover:bg-slate-100 transition cursor-pointer"
         >
-          <option value="all">All States (MH + KA)</option>
-          <option value="Maharashtra">Maharashtra Police</option>
-          <option value="Karnataka">Karnataka Police</option>
+          {DEPT_FILTERS.map((f) => (
+            <option key={f.key} value={f.key}>{f.label}</option>
+          ))}
         </select>
+
+        {/* T2.3 — PII Redaction Mode toggle */}
+        <button
+          onClick={onToggleRedaction}
+          title={redactionMode ? "Disable PII Redaction Mode" : "Enable PII Redaction Mode"}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-lg transition border ${
+            redactionMode
+              ? "bg-red-50 text-red-700 border-red-300 redaction-activate"
+              : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+          }`}
+        >
+          {redactionMode ? <Lock size={14} /> : <LockOpen size={14} />}
+          <span className="hidden sm:inline">{redactionMode ? "Redacted" : "Redact PII"}</span>
+        </button>
+
+        {/* T3.1 — Audit log panel toggle */}
+        <button
+          onClick={onOpenAudit}
+          title="Open Immutable Audit Trail (shortcut: A)"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition"
+        >
+          <ScrollText size={14} />
+        </button>
 
         {/* Upload Custom Real Dataset (CSV) Button */}
         <button

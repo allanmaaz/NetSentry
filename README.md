@@ -232,10 +232,33 @@ To securely expose the local FastAPI server to Cloudflare without opening router
 
 ---
 
+## 🏆 SIH 2026 Evaluation Rubric Compliance
+
+| # | Rubric Criterion | Weight | NetSentry Compliance Evidence | Status |
+|---|---|---|---|---|
+| 1 | Problem Relevance & Solution Fit | 20% | Cross-state CCTNS silo problem modeled directly; Telgi interstate syndicate as landmark baseline; MH + KA + FIU + CDR datasets with planted cross-state entities | ✅ Covered |
+| 2 | Technical Innovation & Approach | 20% | Celestial orbital topology on betweenness bottlenecks; trained Random Forest (99.99% ROC-AUC); Isolation Forest anomaly badges; PageRank + BFS path tracer; FIR NLP → graph spawn | ✅ Covered |
+| 3 | Feasibility & Implementation Depth | 15% | Working FastAPI + SQLite + React + vanilla engine; Docker + Cloudflare deploy; live demo at netsentry.pages.dev | ✅ Covered |
+| 4 | User Experience & Tactical UI | 15% | Inspector drawer, HITL adjudication dock, arrest simulator, PII redaction mode, timeline player, multilingual search | ✅ Covered |
+| 5 | Court Admissibility & Ethics | 15% | Section 65B dossier export with SHA-256; immutable audit trail; RBAC officer login; HITL human-decides governance | ✅ Covered |
+| 6 | Presentation & Demo Readiness | 15% | 5-minute demo script (below); architecture flowchart; API reference; print-optimized dossier | ✅ Covered |
+
+---
+
 ## 👥 Contributors & Collaboration
 
 * **Lead Architects**: Allan Maaz ([@allanmaaz](https://github.com/allanmaaz)) & Meer Mohammed Shoaib ([@meer-md-shoaib](https://github.com/meer-md-shoaib))
-* **Collaborator**: 
+
+### Team Attribution (SIH 2026 — 6-Member Squad)
+
+| Member | Ownership | Key Deliverables |
+|---|---|---|
+| **Meer** | Core Intelligence Engine & Mega-Upgrades | XAI legal justification engine, Isolation Forest anomaly badges, FIR NLP → graph spawn, BFS path tracer |
+| **Maaz (Allan Maaz)** | Graph Analytics, ML Model & 3D Engine | PageRank centrality, trained Random Forest + `/api/ml/match`, 3D billboarded labels, temporal timeline |
+| **Sadiya** | HITL & User Experience | Side-by-side comparison modal, confidence breakdown bars, PII redaction mode, department filter chips |
+| **Prithvi** | Data Pipeline & PRD Quick-Wins | CSV ingest → graph spawn, schema adapter display, edge-click CDR/transaction modal, RBAC login |
+| **Rabiya** | Documentation, Dataset & Compliance | PRD-quality README, 4 synthetic CSV datasets (970 records), immutable audit trail |
+| **Nabiya** | Polish, Animations & Test Suite | View transitions + skeletons, jurisdiction badges, 10-test suite, centrality grid, print CSS, LIVE badge |
 
 Pull requests, issues, and security reviews are welcomed! Please read our [Contribution Guidelines](CONTRIBUTING.md) before submitting.
 

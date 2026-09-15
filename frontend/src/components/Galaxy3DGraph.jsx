@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ZoomIn, ZoomOut, Compass, RefreshCw, Layers } from "lucide-react";
+import { matchesDept } from "../services/deptFilter";
 
 /**
  * Sovereign 3D WebGL Galactic Universe Component
@@ -54,18 +55,20 @@ export default function Galaxy3DGraph({
   );
 
   // Filter nodes according to state, threat tier, and timeline progress
+  // T2.4 — non-matching department nodes are DIMMED to 10% opacity, not removed
   const filteredNodes = useMemo(() => {
     if (!data?.nodes) return [];
-    return data.nodes.filter((node) => {
-      if (filterState !== "all" && node.state !== filterState) return false;
-      if (filterTier !== "all" && node.threat_tier !== filterTier) return false;
-      if (timeProgress < 100 && node.timeline_month) {
-        const totalMonths = 14;
-        const currentCutoff = Math.ceil((timeProgress / 100) * totalMonths);
-        if (node.timeline_month > currentCutoff) return false;
-      }
-      return true;
-    });
+    return data.nodes
+      .filter((node) => {
+        if (filterTier !== "all" && node.threat_tier !== filterTier) return false;
+        if (timeProgress < 100 && node.timeline_month) {
+          const totalMonths = 14;
+          const currentCutoff = Math.ceil((timeProgress / 100) * totalMonths);
+          if (node.timeline_month > currentCutoff) return false;
+        }
+        return true;
+      })
+      .map((node) => ({ ...node, _dimmed: !matchesDept(node, filterState) }));
   }, [data?.nodes, filterState, filterTier, timeProgress]);
 
   // Links between currently visible filtered nodes
@@ -291,6 +294,8 @@ export default function Galaxy3DGraph({
     const createNode = (entity, position, radius, colorHex) => {
       const isNeutralized = neutralizedNodeId === entity.id;
       const finalColor = isNeutralized ? colors.neutralized : colorHex;
+      // T2.4 — dim non-matching department nodes to 10% opacity
+      const dimOpacity = entity._dimmed ? 0.1 : 1;
 
       // Sphere Mesh
       const sphereGeo = new THREE.SphereGeometry(radius, 32, 32);
@@ -299,7 +304,9 @@ export default function Galaxy3DGraph({
         roughness: 0.3,
         metalness: 0.2,
         emissive: finalColor,
-        emissiveIntensity: isNeutralized ? 0.8 : 0.25
+        emissiveIntensity: isNeutralized ? 0.8 : 0.25,
+        transparent: entity._dimmed === true,
+        opacity: dimOpacity
       });
       const mesh = new THREE.Mesh(sphereGeo, sphereMat);
       mesh.position.copy(position);
@@ -338,6 +345,7 @@ export default function Galaxy3DGraph({
       const labelSprite = createTextSprite(displayName);
       labelSprite.position.copy(position);
       labelSprite.position.y -= radius + 4.5;
+      if (entity._dimmed) labelSprite.material.opacity = 0.1;
       scene.add(labelSprite);
       labelSpritesRef.current.push(labelSprite);
     };
@@ -387,10 +395,13 @@ export default function Galaxy3DGraph({
 
       const points = [posS, posT];
       const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+      // T2.4 — dim links touching dimmed nodes
+      const dimNodeIds = new Set(filteredNodes.filter((n) => n._dimmed).map((n) => n.id));
+      const lineDimmed = dimNodeIds.has(sourceId) || dimNodeIds.has(targetId);
       const lineMat = new THREE.LineBasicMaterial({
         color: colors.link,
         transparent: true,
-        opacity: 0.55,
+        opacity: lineDimmed ? 0.1 : 0.55,
         linewidth: 2
       });
       const line = new THREE.Line(lineGeo, lineMat);
