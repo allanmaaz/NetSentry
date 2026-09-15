@@ -1,0 +1,1182 @@
+/* ==========================================================================
+   NetSentry — Sovereign Criminal Network Intelligence Platform
+   Theme: High-Contrast Sovereign Light Mode (MHA / NCRB Standard)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #F0F4F8;
+  --bg-grid: #E2E8F0;
+  --surface: #FFFFFF;
+  --surface-alt: #F8FAFC;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --border-focus: #0EA5E9;
+  
+  --navy: #0F172A;
+  --navy-light: #1E293B;
+  --navy-muted: #334155;
+  --gray: #64748B;
+  --gray-light: #94A3B8;
+  --gray-faint: #F1F5F9;
+
+  --sovereign-blue: #0EA5E9;
+  --royal-purple: #8B5CF6;
+  --sun-gold: #F97316;
+  
+  --critical: #EF4444;
+  --critical-bg: #FEF2F2;
+  --critical-border: #FCA5A5;
+  
+  --high: #F59E0B;
+  --high-bg: #FFFBEB;
+  --high-border: #FCD34D;
+  
+  --medium: #06B6D4;
+  --medium-bg: #ECFEFF;
+  --medium-border: #A5F3FC;
+  
+  --low: #10B981;
+  --low-bg: #ECFDF5;
+  --low-border: #A7F3D0;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+  --shadow-modal: 0 24px 48px -12px rgba(15, 23, 42, 0.22);
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg);
+  color: var(--navy);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── APP WRAPPER ── */
+#app-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── SOVEREIGN TOP COMMAND BAR ── */
+#top-command-bar {
+  height: 60px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.5px;
+}
+
+.brand-icon-shield {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #0EA5E9 0%, #8B5CF6 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35);
+}
+
+.badge-sih-sovereign {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(14, 165, 233, 0.1);
+  color: var(--sovereign-blue);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-sih-sovereign::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--sovereign-blue);
+  box-shadow: 0 0 6px var(--sovereign-blue);
+  display: inline-block;
+}
+
+/* ── SYNDICATE SELECTOR ── */
+.syndicate-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.syndicate-dropdown {
+  background: var(--surface-alt);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 32px 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  transition: var(--transition);
+}
+
+.syndicate-dropdown:hover, .syndicate-dropdown:focus {
+  border-color: var(--sovereign-blue);
+  background: #FFFFFF;
+}
+
+.dropdown-arrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: var(--gray);
+}
+
+/* ── SEARCH BAR ── */
+.search-container {
+  flex: 1;
+  max-width: 420px;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 16px 0 38px;
+  background: var(--surface-alt);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-family: var(--font-main);
+  color: var(--navy);
+  outline: none;
+  transition: var(--transition);
+}
+
+.search-input:focus {
+  border-color: var(--sovereign-blue);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+.search-icon-lens {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray);
+  pointer-events: none;
+}
+
+/* ── VIEW MODE SWITCHER TOGGLE (2D / 3D / MAP) ── */
+.view-mode-toggle {
+  display: flex;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-toggle-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+}
+
+.view-toggle-btn:hover {
+  color: var(--navy);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.view-toggle-btn.active {
+  background: var(--navy);
+  color: #FFFFFF;
+  box-shadow: var(--shadow-xs);
+}
+
+/* ── THREAT LEVEL FILTER CHIPS ── */
+.threat-filter-group {
+  display: flex;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.filter-chip {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filter-chip:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.filter-chip.active {
+  background: #FFFFFF;
+  box-shadow: var(--shadow-xs);
+  color: var(--navy);
+}
+
+.filter-chip.chip-critical.active {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #F87171;
+}
+
+.filter-chip.chip-high.active {
+  background: #FFEDD5;
+  color: #C2410C;
+  border: 1px solid #FB923C;
+}
+
+.filter-chip.chip-medium.active {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FBBF24;
+}
+
+/* ── ACTION BUTTONS IN TOPBAR ── */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-command {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+
+.btn-command-primary {
+  background: linear-gradient(135deg, #0EA5E9, #0284C7);
+  color: #FFFFFF;
+  border-color: #0284C7;
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.25);
+}
+
+.btn-command-primary:hover {
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-command-secondary {
+  background: #FFFFFF;
+  color: var(--navy);
+  border-color: var(--border-strong);
+}
+
+.btn-command-secondary:hover {
+  background: var(--surface-alt);
+  border-color: var(--navy);
+}
+
+.btn-command-tactical {
+  background: var(--critical-bg);
+  color: var(--critical);
+  border-color: var(--critical-border);
+}
+
+.btn-command-tactical:hover {
+  background: #FEE2E2;
+  border-color: var(--critical);
+}
+
+/* ── MAIN WORKSPACE AREA ── */
+#main-viewport {
+  display: flex;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── VIEW CONTAINERS ── */
+.viewport-stage {
+  flex: 1;
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* Subtle coordinate dot-grid pattern for Sovereign Command look */
+.viewport-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #CBD5E1 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 1;
+}
+
+#canvas-2d-container,
+#universe-3d-container,
+#map-geo-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#canvas-2d-container canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 2;
+  cursor: grab;
+}
+
+#canvas-2d-container canvas:active {
+  cursor: grabbing;
+}
+
+#universe-3d-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  z-index: 2;
+  cursor: grab;
+}
+
+/* ── TACTICAL SUCCESSOR ALERT CARD ── */
+.tactical-alert-card {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid var(--critical);
+  border-radius: var(--radius-md);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 10px 25px -3px rgba(239, 68, 68, 0.25);
+  animation: slideDownAlert 0.3s ease-out;
+}
+
+@keyframes slideDownAlert {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.tactical-alert-badge {
+  background: var(--critical);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.5px;
+}
+
+.tactical-alert-info {
+  font-size: 12px;
+  color: var(--navy);
+  line-height: 1.4;
+}
+
+.tactical-alert-info strong {
+  color: var(--critical);
+}
+
+.btn-reset-sim {
+  background: #FFFFFF;
+  border: 1px solid var(--border-strong);
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.btn-reset-sim:hover {
+  background: var(--surface-alt);
+}
+
+/* ── GRAPH CONTROLS (ZOOM / PAN / RESET) ── */
+.viewport-floating-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+
+.btn-ctrl-square {
+  width: 38px;
+  height: 38px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy);
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.btn-ctrl-square:hover {
+  background: var(--surface-alt);
+  box-shadow: var(--shadow-md);
+  border-color: var(--sovereign-blue);
+  color: var(--sovereign-blue);
+}
+
+/* ── VIEWPORT FLOATING LEGEND ── */
+.viewport-floating-legend {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--navy);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--navy-muted);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot.sun { background: var(--sun-gold); box-shadow: 0 0 6px rgba(249, 115, 22, 0.4); }
+.legend-dot.lieutenant { background: var(--sovereign-blue); }
+.legend-dot.operative { background: var(--royal-purple); }
+.legend-dot.transit { background: var(--medium); }
+
+/* ── RIGHT INSPECTOR DRAWER ── */
+#inspector-drawer {
+  width: 380px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 50;
+  box-shadow: -4px 0 16px rgba(15, 23, 42, 0.05);
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.inspector-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.entity-serial-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sovereign-blue);
+  margin-bottom: 4px;
+}
+
+.entity-canonical-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.entity-role-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  margin-top: 4px;
+}
+
+.inspector-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── METRICS TILES ── */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.metric-card {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  margin-bottom: 4px;
+}
+
+.metric-value-box {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.metric-value-num {
+  font-size: 18px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--navy);
+}
+
+/* Risk Donut representation */
+.risk-indicator-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+.risk-critical { background: var(--critical-bg); color: var(--critical); border: 1px solid var(--critical-border); }
+.risk-high { background: var(--high-bg); color: var(--high); border: 1px solid var(--high-border); }
+.risk-medium { background: var(--medium-bg); color: var(--medium); border: 1px solid var(--medium-border); }
+
+/* ── SECTION DETAIL BOXES ── */
+.detail-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+.tags-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-bubble {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--navy);
+  font-weight: 500;
+}
+
+.tag-bubble-accent {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #0369A1;
+  font-weight: 600;
+}
+
+.mono-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.fir-card-item {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--sovereign-blue);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.fir-number {
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.fir-agency {
+  font-size: 11px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.intelligence-narrative {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #92400E;
+}
+
+/* ── BOTTOM HITL ADJUDICATION DOCK ── */
+#hitl-adjudication-dock {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 380px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+  z-index: 40;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hitl-dock-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hitl-pulse-orb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #F59E0B;
+  box-shadow: 0 0 8px #F59E0B;
+  animation: hitlBlink 1.5s infinite;
+}
+
+@keyframes hitlBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.hitl-candidate-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.hitl-match-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.btn-confirm-merge {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  transition: var(--transition);
+}
+
+.btn-confirm-merge:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ── MODALS (SECTION 65B & ML PLAYGROUND) ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+}
+
+.modal-dialog {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-modal);
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalPop 0.2s ease-out;
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-dialog-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title-wrap h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.modal-title-wrap p {
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--gray);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-dialog-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-dialog-footer {
+  padding: 14px 24px;
+  background: var(--surface-alt);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── COURT SECTION 65B CERTIFICATE STYLING ── */
+.court-certificate-page {
+  border: 2px solid var(--navy);
+  padding: 24px;
+  background: #FFFFFF;
+  font-family: 'Times New Roman', serif;
+  color: #000000;
+}
+
+.court-cert-header {
+  text-align: center;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.court-cert-header h2 {
+  font-size: 18px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.court-cert-header h4 {
+  font-size: 12px;
+  font-weight: normal;
+  margin-top: 4px;
+}
+
+.court-cert-body {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.hash-token-box {
+  background: #F1F5F9;
+  border: 1px dashed #64748B;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  word-break: break-all;
+  margin: 10px 0;
+}
+
+/* ── INTERACTIVE ML PLAYGROUND STYLING ── */
+.ml-playground-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ml-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ml-input-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy-muted);
+}
+
+.ml-input-group input {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  outline: none;
+}
+
+.ml-input-group input:focus {
+  border-color: var(--sovereign-blue);
+}
+
+.feature-bar-row {
+  margin-bottom: 8px;
+}
+
+.feature-bar-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.feature-bar-track {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.feature-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0EA5E9, #8B5CF6);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ── SEARCH AUTOCOMPLETE POPUP ── */
+.search-results-popup {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 150;
+}
+
+.search-result-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-strong);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: var(--transition);
+}
+
+.search-result-item:hover {
+  background: var(--surface-alt);
+}
+
+.search-result-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.search-result-meta {
+  font-size: 11px;
+  color: var(--gray);
+}
+
+/* ── PRINT MEDIA QUERIES (SECTION 65B COURT CERTIFICATE) ── */
+@media print {
+  body, html {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  #top-command-bar,
+  #main-viewport,
+  #hitl-adjudication-dock,
+  .modal-dialog-header,
+  .modal-dialog-footer,
+  .viewport-floating-controls,
+  .viewport-floating-legend,
+  #modal-ml {
+    display: none !important;
+  }
+
+  .modal-overlay {
+    position: static !important;
+    background: none !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
+  }
+
+  .modal-dialog {
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+  }
+
+  .court-certificate-page {
+    border: 2px solid #000000 !important;
+    padding: 40px !important;
+    margin: 0 !important;
+    page-break-inside: avoid;
+  }
+}
+
+/* ============ Responsive: small tablets ≤900px, phones ≤640px (C1–C4) ============ */
+@media (max-width: 900px) {
+  /* C1 — topbar wraps to two rows, search takes its own row */
+  #top-command-bar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 60px;
+    padding: 8px 12px;
+    gap: 8px;
+    row-gap: 8px;
+  }
+  .search-container {
+    flex: 1 1 100%;
+    order: 10;
+    max-width: none;
+  }
+  .badge-sih-sovereign {
+    display: none;
+  }
+
+  /* C2 — inspector drawer becomes an overlay slide-over */
+  #inspector-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(380px, 94vw);
+    z-index: 150;
+    box-shadow: -12px 0 40px rgba(15, 23, 42, 0.25);
+  }
+  #inspector-drawer.drawer-hidden {
+    transform: translateX(105%);
+  }
+
+  /* C2 — HITL dock goes full-width and wraps */
+  #hitl-adjudication-dock {
+    right: 0;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .hitl-candidate-pair {
+    flex-wrap: wrap;
+  }
+
+  /* C3 — floating layers clear the taller dock */
+  #timeline-controls-bar {
+    bottom: 150px !important;
+    max-width: 94vw;
+  }
+  .tactical-alert-card {
+    left: 12px;
+    right: 12px;
+    transform: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+  .viewport-floating-controls {
+    bottom: 12px;
+    left: 12px;
+  }
+  .btn-ctrl-square {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* C1 — dynamic viewport height for mobile URL bars */
+  html, body, #app-container {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* C3 — legend hidden on phones (canvas icons + labels carry the meaning) */
+  .viewport-floating-legend {
+    display: none;
+  }
+
+  /* C4 — grids stack, modals breathe */
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+  .ml-playground-grid {
+    grid-template-columns: 1fr;
+  }
+  .modal-overlay {
+    padding: 12px;
+  }
+  .modal-dialog-body {
+    padding: 16px;
+  }
+  #timeline-controls-bar {
+    bottom: 170px !important;
+  }
+
+  /* C4 — injected overlay content (inline styles need !important) */
+  #login-roles {
+    grid-template-columns: 1fr !important;
+  }
+  #modal-edge-detail .modal-dialog-body {
+    overflow-x: auto;
+  }
+  #modal-edge-detail table {
+    font-size: 10px;
+  }
+
+  /* C1 — compact topbar buttons on phones */
+  .topbar-actions .btn-command {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  #top-command-bar {
+    padding: 8px;
+    gap: 6px;
+  }
+}

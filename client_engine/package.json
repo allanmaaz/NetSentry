@@ -1,0 +1,23 @@
+{
+  "name": "netsentry",
+  "version": "9.0.0",
+  "description": "Autonomous Criminal Network & Cross-Jurisdiction Intelligence Platform (SIH 2026)",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/test_intelligence.js && node tests/test_fiu_cdr.js",
+    "start": "python -m http.server 8090"
+  },
+  "keywords": [
+    "sih2026",
+    "law-enforcement",
+    "ncrb",
+    "criminal-network-analysis",
+    "betweenness-centrality",
+    "indic-alias-resolution",
+    "section-65b"
+  ],
+  "authors": [
+    "Allan Maaz"
+  ],
+  "license": "Proprietary"
+}
