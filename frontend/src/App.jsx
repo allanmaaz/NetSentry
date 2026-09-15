@@ -12,6 +12,7 @@ import ModelMetricsModal from "./components/ModelMetricsModal";
 import UploadDatasetModal from "./components/UploadDatasetModal";
 import LoginOverlay from "./components/LoginOverlay";
 import AuditLogPanel from "./components/AuditLogPanel";
+import EdgeEvidenceModal from "./components/EdgeEvidenceModal";
 import {
   fetchGraph,
   fetchEntityDetail,
@@ -77,6 +78,10 @@ export default function App() {
 
   // T5.3 — BFS traced path state
   const [tracedPath, setTracedPath] = useState([]);
+
+  // T2.2 — Edge detail evidence modal state
+  const [selectedEdge, setSelectedEdge] = useState(null);
+  const [isEdgeModalOpen, setIsEdgeModalOpen] = useState(false);
 
   // T4.7 — View transition state (300ms fade-out → fade-in)
   const [viewTransitioning, setViewTransitioning] = useState(false);
@@ -368,6 +373,10 @@ export default function App() {
                 neutralizedNodeId={neutralizedNodeId}
                 timeProgress={timelineProgress}
                 tracedPath={tracedPath}
+                onSelectEdge={(edge) => {
+                  setSelectedEdge(edge);
+                  setIsEdgeModalOpen(true);
+                }}
               />
             )}
           </div>
@@ -491,6 +500,14 @@ export default function App() {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUploadSuccess={loadData}
+      />
+
+      {/* T2.2 — Edge Click Call / Transaction Evidence Detail Modal */}
+      <EdgeEvidenceModal
+        isOpen={isEdgeModalOpen}
+        onClose={() => setIsEdgeModalOpen(false)}
+        edge={selectedEdge}
+        onSelectNode={handleSelectNode}
       />
     </div>
   );

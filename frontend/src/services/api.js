@@ -281,3 +281,59 @@ export async function parseNarrative(narrative, station = "Bund Garden PS", stat
     node: newNode
   };
 }
+
+export async function matchEntitiesWithML(entityA, entityB) {
+  const nameA = entityA.name || entityA.canonical_name || "";
+  const nameB = entityB.name || entityB.canonical_name || "";
+  const cacheKey = `netsentry_ml_match_${nameA}_${nameB}`;
+
+  const mlBase = API_BASE.replace("/api/v1", "/api/ml");
+
+  try {
+    const res = await fetch(`${mlBase}/match`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name_a: nameA,
+        name_b: nameB,
+        phones_a: entityA.phones || entityA.details?.phones || [],
+        phones_b: entityB.phones || entityB.details?.phones || [],
+        vehicles_a: entityA.vehicles || entityA.details?.vehicles || [],
+        vehicles_b: entityB.vehicles || entityB.details?.vehicles || []
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+      return data;
+    }
+  } catch (err) {
+    // Attempt localhost fallback if tunnel had an issue
+    try {
+      const resLocal = await fetch(`http://127.0.0.1:8000/api/ml/match`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name_a: nameA,
+          name_b: nameB,
+          phones_a: entityA.phones || entityA.details?.phones || [],
+          phones_b: entityB.phones || entityB.details?.phones || [],
+          vehicles_a: entityA.vehicles || entityA.details?.vehicles || [],
+          vehicles_b: entityB.vehicles || entityB.details?.vehicles || []
+        })
+      });
+      if (resLocal.ok) {
+        const data = await resLocal.json();
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+        return data;
+      }
+    } catch {}
+    // Graceful fallback to localStorage cache or default
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch {}
+  }
+  return null;
+}
+

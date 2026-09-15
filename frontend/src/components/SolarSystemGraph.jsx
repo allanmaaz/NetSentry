@@ -543,6 +543,27 @@ export default function SolarSystemGraph({
           ctx.fillText(String(jCount), bx, by + 3);
         }
 
+        // T1.3 — Anomaly indicator overlay on nodes with anomaly score >= 70
+        const aScore =
+          node.anomaly_score ??
+          node.anomalyScore ??
+          (node.betweenness_score > 0.4 || (node.details?.phones?.length || 0) >= 3 || node.risk_score >= 85 ? 78 : null);
+        if (aScore && aScore >= 70) {
+          const ax = node.x - radius * 0.75;
+          const ay = node.y - radius * 0.85;
+          ctx.beginPath();
+          ctx.arc(ax, ay, 7.5, 0, 2 * Math.PI);
+          ctx.fillStyle = "#ef4444";
+          ctx.fill();
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 9px 'JetBrains Mono', monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("⚠", ax, ay + 3);
+        }
+
         ctx.restore(); // T2.4 dim restore
       });
 

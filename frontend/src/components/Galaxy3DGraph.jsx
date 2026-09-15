@@ -243,8 +243,13 @@ export default function Galaxy3DGraph({
     ctx.fillText(truncated, 128, 32);
 
     const texture = new THREE.CanvasTexture(canvas);
-    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    const spriteMat = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false
+    });
     const sprite = new THREE.Sprite(spriteMat);
+    sprite.renderOrder = 999;
     sprite.scale.set(16, 4, 1);
     return sprite;
   };

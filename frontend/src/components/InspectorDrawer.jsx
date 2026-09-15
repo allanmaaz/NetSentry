@@ -13,6 +13,7 @@ import {
   Route,
   Activity
 } from "lucide-react";
+import { generateLegalJustification, computeIsolationScore } from "../services/xaiExplainer";
 
 export default function InspectorDrawer({
   entity,
@@ -49,7 +50,8 @@ export default function InspectorDrawer({
   };
 
   // T1.3 — Isolation Forest anomaly score badge (red/orange/green)
-  const anomalyScore = entity.anomaly_score ?? entity.anomalyScore ?? null;
+  const anomalyScore =
+    entity.anomaly_score ?? entity.anomalyScore ?? computeIsolationScore(entity, graphNodes);
   const anomalyClass =
     anomalyScore == null ? null
     : anomalyScore >= 70 ? "critical"
@@ -59,6 +61,10 @@ export default function InspectorDrawer({
     anomalyScore == null ? null
     : anomalyScore >= 70 ? "ANOMALY"
     : anomalyScore >= 40 ? "WATCH" : "NOMINAL";
+
+  // T1.1 — Dynamic court-worded XAI justification via template synthesis
+  const legalJustification =
+    entity.legal_justification || generateLegalJustification(entity, graphNodes);
 
   const riskColor = getRiskColor(entity.risk_score);
   const circumference = 2 * Math.PI * 36;
@@ -147,7 +153,7 @@ export default function InspectorDrawer({
             <span>AI Legal Explainability (Sec. 65B Audit)</span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed italic">
-            "{entity.legal_justification}"
+            "{legalJustification}"
           </p>
         </div>
 
