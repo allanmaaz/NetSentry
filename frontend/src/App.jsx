@@ -18,6 +18,8 @@ import BlockchainLedgerModal from "./components/BlockchainLedgerModal";
 import Sidebar from "./components/Sidebar";
 import DashboardView from "./components/DashboardView";
 import EntitiesView from "./components/EntitiesView";
+import MobileNav from "./components/MobileNav";
+import GlobalSearchBar from "./components/GlobalSearchBar";
 import { getCustomIngestedData } from "./services/normalizer";
 import { addBlock, initChain } from "./services/blockchainLedger";
 import {
@@ -63,6 +65,10 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState(null);
   const [isLedgerOpen, setIsLedgerOpen] = useState(false);
+
+  // R2/R3 — mobile navigation state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -309,6 +315,8 @@ export default function App() {
           onViewModeChange={setViewMode}
           currentOfficer={currentOfficer}
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onOpenMenu={() => setIsSidebarOpen(true)}
+          onOpenSearch={() => setIsSearchOpen(true)}
         />
 
         {/* Dynamic Multi-View Workspace */}
@@ -405,6 +413,43 @@ export default function App() {
               {toastMessage}
             </div>
           )}
+
+          {/* R2 — Mobile search overlay (phones/tablets) */}
+          {isSearchOpen && (
+            <div className="search-overlay lg:hidden">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <GlobalSearchBar
+                    nodes={graphData?.nodes || []}
+                    onSelectNode={(id) => {
+                      handleSelectNode(id);
+                      setActiveTab("graph");
+                      setIsSearchOpen(false);
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={() => setIsSearchOpen(false)}
+                  className="flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800 transition shrink-0"
+                  aria-label="Close search"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* R3 — Mobile bottom tab bar (phones/tablets) */}
+          <div className="lg:hidden">
+            <MobileNav
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              pendingCount={pendingResolutions?.length || 0}
+              onOpenSearch={() => setIsSearchOpen(true)}
+              onOpenMenu={() => setIsSidebarOpen(true)}
+              onOpenIngest={() => setIsIngestModalOpen(true)}
+            />
+          </div>
         </div>
 
         {/* Accessible Semantic SEO Footer — hidden on phones (bottom nav replaces it) */}
@@ -427,6 +472,57 @@ export default function App() {
           </nav>
         </footer>
       </div>
+
+      {/* R2 — Sidebar slide-over for phones/tablets (any tap closes it) */}
+      {isSidebarOpen && (
+        <div className="lg:hidden">
+          <div className="sheet-backdrop" onClick={() => setIsSidebarOpen(false)} />
+          <div className="sidebar-slideover" onClick={() => setIsSidebarOpen(false)}>
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+              <Sidebar
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                onTabChange={setActiveTab}
+                currentOfficer={currentOfficer}
+                onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                onOpenIngest={() => setIsIngestModalOpen(true)}
+                onOpenUploadCsv={() => setIsUploadModalOpen(true)}
+                onOpenMetrics={() => setIsMetricsModalOpen(true)}
+                onOpenCypherModal={() => setIsCypherModalOpen(true)}
+                onOpenLedger={() => setIsLedgerOpen(true)}
+                onLogout={handleLogout}
+                pendingCount={pendingResolutions?.length || 0}
+              />
+              {/* R2 — graph filters live here on phones (hidden from header) */}
+              <div className="p-3 border-t border-slate-800 space-y-2 bg-slate-950">
+                <div className="px-1 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                  Graph Filters
+                </div>
+                <select
+                  value={filterState}
+                  onChange={(e) => onFilterStateChange(e.target.value)}
+                  className="w-full text-xs font-mono px-2.5 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 outline-none"
+                >
+                  <option value="all">All States</option>
+                  <option value="Maharashtra">Maharashtra Police</option>
+                  <option value="Karnataka">Karnataka Police</option>
+                </select>
+                <select
+                  value={filterTier || "all"}
+                  onChange={(e) => onFilterTierChange(e.target.value)}
+                  className="w-full text-xs font-mono px-2.5 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 outline-none"
+                >
+                  <option value="all">All Tiers</option>
+                  <option value="critical">Critical Risk</option>
+                  <option value="high">High Risk</option>
+                  <option value="medium">Medium Risk</option>
+                  <option value="low">Low Risk</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Global Modals Accessible Across All Views */}
       <DossierModal

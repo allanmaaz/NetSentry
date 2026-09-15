@@ -186,6 +186,22 @@ body {
 .sheet-half { height: 55dvh; }
 .sheet-full { height: 92dvh; }
 
+/* Bottom sheets float above the mobile nav bar */
+@media (max-width: 1023px) {
+  .sheet {
+    left: 8px;
+    right: 8px;
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    border-radius: 16px;
+  }
+  .sheet-full {
+    height: calc(92dvh - 66px);
+  }
+  .sheet-half {
+    height: calc(55dvh - 33px);
+  }
+}
+
 /* R2 — Mobile search overlay */
 .search-overlay {
   position: absolute;

@@ -39,7 +39,7 @@ export default function Sidebar({
   ];
 
   return (
-    <aside className="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0 select-none z-30 font-sans">
+    <aside className="w-64 bg-slate-950 border-r border-slate-800 hidden lg:flex flex-col justify-between shrink-0 select-none z-30 font-sans">
       {/* Top Section: Brand & Navigation */}
       <div>
         {/* Brand Header */}

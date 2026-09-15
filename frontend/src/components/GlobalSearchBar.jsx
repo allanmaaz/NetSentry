@@ -36,7 +36,7 @@ export default function GlobalSearchBar({ nodes, onSelectNode }) {
   };
 
   return (
-    <div ref={containerRef} className="relative w-72">
+    <div ref={containerRef} className="relative w-full sm:w-72">
       <div className="relative flex items-center">
         <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
         <input
@@ -73,10 +73,10 @@ export default function GlobalSearchBar({ nodes, onSelectNode }) {
             <button
               key={node.id}
               onClick={() => handleSelect(node.id)}
-              className="w-full px-3 py-2.5 flex items-center justify-between text-left hover:bg-slate-50 transition text-xs"
+              className="w-full px-3 py-2.5 flex items-center justify-between gap-2 text-left hover:bg-slate-50 transition text-xs"
             >
-              <div>
-                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5 truncate">
                   {node.name}
                   {node.orbit_level === 0 && (
                     <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-bold">

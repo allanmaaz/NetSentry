@@ -1,5 +1,5 @@
 import React from "react";
-import { RefreshCw, Orbit, Box, UserCheck, Shield } from "lucide-react";
+import { RefreshCw, Orbit, Box, UserCheck, Shield, Menu, Search } from "lucide-react";
 import GlobalSearchBar from "./GlobalSearchBar";
 
 export default function Header({
@@ -16,7 +16,9 @@ export default function Header({
   viewMode = "2d",
   onViewModeChange,
   currentOfficer,
-  onOpenAuthModal
+  onOpenAuthModal,
+  onOpenMenu,
+  onOpenSearch
 }) {
   const getTabTitle = () => {
     switch (activeTab) {
@@ -32,23 +34,43 @@ export default function Header({
   };
 
   return (
-    <header className="h-14 bg-slate-950 border-b border-slate-800 px-6 flex items-center justify-between shrink-0 z-20 gap-4 font-sans select-none">
-      {/* Left: Active View Title */}
-      <div className="flex items-center gap-3 shrink-0">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xs font-mono font-bold tracking-wider text-slate-100 uppercase">
+    <header className="h-14 bg-slate-950 border-b border-slate-800 px-3 sm:px-6 flex items-center justify-between shrink-0 z-20 gap-2 sm:gap-4 font-sans select-none">
+      {/* Left: Hamburger (mobile) + Active View Title */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+        {/* R2 — hamburger opens sidebar slide-over on phones/tablets */}
+        <button
+          onClick={onOpenMenu}
+          title="Open navigation menu"
+          aria-label="Open navigation menu"
+          className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800 transition shrink-0"
+        >
+          <Menu size={18} />
+        </button>
+        <div className="flex items-center gap-2 min-w-0">
+          <h1 className="text-xs font-mono font-bold tracking-wider text-slate-100 uppercase truncate">
             {getTabTitle()}
           </h1>
-          <span className="hidden md:inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-800">
+          <span className="hidden md:inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-800 shrink-0">
             CCTNS • ICJS
           </span>
         </div>
       </div>
 
-      {/* Center: Global Multilingual Search */}
+      {/* Center: Global Multilingual Search (tablet/desktop) */}
       <div className="flex-1 max-w-sm hidden sm:block">
         <GlobalSearchBar nodes={nodes} onSelectNode={onSelectNode} />
       </div>
+
+      {/* R2 — search icon button (phones): opens search overlay */}
+      <div className="flex-1 sm:hidden" />
+      <button
+        onClick={onOpenSearch}
+        title="Search suspects"
+        aria-label="Search suspects"
+        className="sm:hidden flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900 border border-slate-800 transition shrink-0"
+      >
+        <Search size={17} />
+      </button>
 
       {/* Right: View-Specific Controls & Officer Badge */}
       <div className="flex items-center gap-2 shrink-0">
@@ -67,7 +89,7 @@ export default function Header({
                 title="Switch to 2D Solar System View"
               >
                 <Orbit size={13} className={viewMode === "2d" ? "text-amber-400" : ""} />
-                <span>2D Solar</span>
+                <span className="hidden min-[420px]:inline">2D Solar</span>
               </button>
               <button
                 onClick={() => onViewModeChange && onViewModeChange("3d")}
@@ -79,26 +101,26 @@ export default function Header({
                 title="Switch to 3D Galactic WebGL Universe"
               >
                 <Box size={13} className={viewMode === "3d" ? "text-sky-400" : ""} />
-                <span>3D Galaxy</span>
+                <span className="hidden min-[420px]:inline">3D Galaxy</span>
               </button>
             </div>
 
-            {/* State Filter */}
+            {/* State Filter — tablet/desktop (phones use sidebar filters) */}
             <select
               value={filterState}
               onChange={(e) => onFilterStateChange(e.target.value)}
-              className="text-xs font-mono px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 outline-none hover:bg-slate-850 transition cursor-pointer shrink-0"
+              className="hidden md:block text-xs font-mono px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 outline-none hover:bg-slate-850 transition cursor-pointer shrink-0"
             >
               <option value="all">All States</option>
               <option value="Maharashtra">Maharashtra Police</option>
               <option value="Karnataka">Karnataka Police</option>
             </select>
 
-            {/* Risk Tier Filter */}
+            {/* Risk Tier Filter — tablet/desktop (phones use sidebar filters) */}
             <select
               value={filterTier || "all"}
               onChange={(e) => onFilterTierChange && onFilterTierChange(e.target.value)}
-              className="text-xs font-mono px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 outline-none hover:bg-slate-850 transition cursor-pointer shrink-0"
+              className="hidden md:block text-xs font-mono px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 outline-none hover:bg-slate-850 transition cursor-pointer shrink-0"
             >
               <option value="all">All Tiers</option>
               <option value="critical">Critical Risk</option>
@@ -137,7 +159,7 @@ export default function Header({
             <span className="text-[9px] text-slate-400 font-mono">{currentOfficer?.badge_id || "OFFICER"}</span>
             <span className="truncate max-w-[120px] text-[11px] text-slate-200 font-bold">{currentOfficer?.name || "Officer"}</span>
           </div>
-          <span className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-bold ${
+          <span className={`hidden min-[420px]:inline-flex text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-bold ${
             currentOfficer?.role === "System Admin" || currentOfficer?.role === "SUPER_ADMIN"
               ? "bg-purple-950/60 border-purple-500/40 text-purple-300"
               : currentOfficer?.role === "Supervisory Officer" || currentOfficer?.role === "STATION_ADMIN"
