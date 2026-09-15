@@ -1,62 +1,54 @@
 import React, { useState } from "react";
-import { Shield, User, Check, ArrowRight, Lock } from "lucide-react";
+import { Shield, UserCheck, Check, ArrowRight, Lock } from "lucide-react";
 import { setStoredOfficer, setAuthToken } from "../services/api";
+import NetSentryLogo from "./NetSentryLogo";
 
-export const PROFILES = [
+export const DEMO_PROFILES = [
   {
     role: "Analyst",
-    title: "Analyst",
-    name: "Ananya Hegde",
-    rank: "Sub-Inspector",
-    station: "Cubbon Park PS, Bengaluru",
-    badgeId: "KA-CID-4109",
-    tag: "Investigation & Search"
+    name: "Inspector Vikram Rane",
+    badge_id: "MH-CID-8841",
+    rank: "Intelligence Analyst",
+    station: "CID Crime Branch, Pune"
   },
   {
     role: "Supervisory Officer",
-    title: "Supervisor",
-    name: "Rajesh Patil",
-    rank: "Inspector",
-    station: "Bund Garden PS, Pune",
-    badgeId: "MH-POL-8821",
-    tag: "Full Case Authority"
+    name: "DCP Rajesh Patil",
+    badge_id: "MH-IPS-1092",
+    rank: "Supervisory Officer",
+    station: "Zone-II, Pune Police"
   },
   {
     role: "System Admin",
-    title: "Admin",
-    name: "Dr. Vikramaditya Sharma",
-    rank: "Director",
-    station: "NCRB New Delhi",
-    badgeId: "NCRB-DIR-0001",
-    tag: "National Grid Clearance"
+    name: "Director Ananya Deshmukh",
+    badge_id: "MH-DIR-0001",
+    rank: "System Administrator",
+    station: "State Cyber Police HQ"
   }
 ];
 
 export default function LoginPage({ onLoginSuccess }) {
-  const [selectedProfile, setSelectedProfile] = useState(PROFILES[1]); // Default to Supervisor
-  const [officerName, setOfficerName] = useState(PROFILES[1].name);
-  const [badgeId, setBadgeId] = useState(PROFILES[1].badgeId);
-  const [station, setStation] = useState(PROFILES[1].station);
+  const [selectedProfile, setSelectedProfile] = useState(DEMO_PROFILES[0]);
+  const [officerName, setOfficerName] = useState(DEMO_PROFILES[0].name);
+  const [badgeId, setBadgeId] = useState(DEMO_PROFILES[0].badge_id);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSelect = (profile) => {
+  const handleSelectProfile = (profile) => {
     setSelectedProfile(profile);
     setOfficerName(profile.name);
-    setBadgeId(profile.badgeId);
-    setStation(profile.station);
+    setBadgeId(profile.badge_id);
   };
 
   const handleLogin = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsLoading(true);
 
     const officerSession = {
-      name: officerName.trim() || selectedProfile.name,
+      name: officerName || selectedProfile.name,
+      badge_id: badgeId || selectedProfile.badge_id,
       role: selectedProfile.role,
       rank: selectedProfile.rank,
-      badge_id: badgeId.trim() || selectedProfile.badgeId,
-      station: station.trim() || selectedProfile.station,
-      authenticated_at: new Date().toISOString()
+      station: selectedProfile.station
     };
 
     setStoredOfficer(officerSession);
@@ -70,20 +62,18 @@ export default function LoginPage({ onLoginSuccess }) {
 
   return (
     <div className="min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 font-sans">
-      {/* Simple Top Bar */}
+      {/* Top Bar */}
       <header className="flex items-center justify-between max-w-4xl mx-auto w-full pb-6">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-sky-500 text-slate-950 flex items-center justify-center font-bold">
-            <Shield size={18} />
-          </div>
-          <span className="font-bold text-base text-white tracking-tight">NetSentry</span>
-        </div>
-        <span className="text-xs text-slate-400 font-medium">Police Intelligence Portal</span>
+        <NetSentryLogo size={32} showText={true} subtitle="Law Enforcement Grid" />
+        <span className="text-xs text-slate-400 font-medium">National Police Portal</span>
       </header>
 
       {/* Center Card */}
       <main className="max-w-xl mx-auto w-full my-auto space-y-6">
-        <div className="text-center space-y-1.5">
+        <div className="text-center space-y-2">
+          <div className="flex justify-center mb-1">
+            <NetSentryLogo size={64} showText={false} />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Sign In to NetSentry
           </h1>
@@ -98,12 +88,12 @@ export default function LoginPage({ onLoginSuccess }) {
             Select Officer Profile:
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {PROFILES.map((p) => {
+            {DEMO_PROFILES.map((p) => {
               const isSelected = selectedProfile.role === p.role;
               return (
                 <div
                   key={p.role}
-                  onClick={() => handleSelect(p)}
+                  onClick={() => handleSelectProfile(p)}
                   className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between min-h-[105px] ${
                     isSelected
                       ? "bg-slate-900 border-sky-400 ring-1 ring-sky-400/40 shadow-lg"
@@ -112,7 +102,7 @@ export default function LoginPage({ onLoginSuccess }) {
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                      {p.title}
+                      {p.role}
                     </span>
                     {isSelected && (
                       <span className="w-4 h-4 rounded-full bg-sky-400 text-slate-950 flex items-center justify-center">

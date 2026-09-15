@@ -8,11 +8,11 @@ import {
   PlusCircle,
   UploadCloud,
   LogOut,
-  Shield,
   UserCheck,
   Link2,
   X
 } from "lucide-react";
+import NetSentryLogo from "./NetSentryLogo";
 
 export default function Sidebar({
   activeTab,
@@ -53,24 +53,7 @@ export default function Sidebar({
       <div>
         {/* Brand Header */}
         <div className="p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-slate-950 flex items-center justify-center font-black shadow-md shrink-0">
-              <Shield size={20} className="text-slate-950" />
-            </div>
-            <div className="overflow-hidden">
-              <div className="flex items-center gap-1.5">
-                <span className="font-mono font-bold text-sm tracking-wider text-white">
-                  NETSENTRY
-                </span>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                  LIVE
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                Crime Intelligence Grid
-              </p>
-            </div>
-          </div>
+          <NetSentryLogo size={36} showText={true} />
 
           {/* Close button on mobile drawer */}
           {onCloseMobile && (
