@@ -271,7 +271,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 select-none font-sans">
+    <div className="flex w-screen app-dvh overflow-hidden bg-slate-950 text-slate-100 select-none font-sans">
       {/* Persistent Left Navigation Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -401,14 +401,14 @@ export default function App() {
 
           {/* Toast Notification Banner (Globally Visible) */}
           {toastMessage && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white px-4 py-2 rounded-xl shadow-2xl text-xs font-mono border border-slate-700 z-50 animate-bounce backdrop-blur-md">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 max-w-[92vw] bg-slate-900/95 text-white px-4 py-2 rounded-xl shadow-2xl text-xs font-mono border border-slate-700 z-50 animate-bounce backdrop-blur-md text-center break-words">
               {toastMessage}
             </div>
           )}
         </div>
 
-        {/* Accessible Semantic SEO Footer */}
-        <footer className="h-7 bg-slate-950 border-t border-slate-800/80 px-5 flex items-center justify-between text-[11px] text-slate-500 font-mono shrink-0 z-20">
+        {/* Accessible Semantic SEO Footer — hidden on phones (bottom nav replaces it) */}
+        <footer className="h-7 bg-slate-950 border-t border-slate-800/80 px-5 hidden md:flex items-center justify-between text-[11px] text-slate-500 font-mono shrink-0 z-20">
           <div className="flex items-center gap-2">
             <span className="text-slate-400 font-bold">NetSentry Sovereign v2.0</span>
             <span className="text-slate-700">•</span>
