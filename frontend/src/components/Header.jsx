@@ -9,6 +9,8 @@ export default function Header({
   onSelectNode,
   filterState,
   onFilterStateChange,
+  filterTier,
+  onFilterTierChange,
   onReloadData,
   isLoading,
   viewMode = "2d",
@@ -91,6 +93,19 @@ export default function Header({
               <option value="Maharashtra">Maharashtra Police</option>
               <option value="Karnataka">Karnataka Police</option>
             </select>
+
+            {/* Risk Tier Filter */}
+            <select
+              value={filterTier || "all"}
+              onChange={(e) => onFilterTierChange && onFilterTierChange(e.target.value)}
+              className="text-xs font-mono px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 outline-none hover:bg-slate-850 transition cursor-pointer shrink-0"
+            >
+              <option value="all">All Tiers</option>
+              <option value="critical">Critical Risk</option>
+              <option value="high">High Risk</option>
+              <option value="medium">Medium Risk</option>
+              <option value="low">Low Risk</option>
+            </select>
           </>
         )}
 
@@ -110,20 +125,30 @@ export default function Header({
           onClick={onOpenAuthModal}
           title="Active Officer Clearance / Click to Switch"
           className={`flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs font-bold transition border cursor-pointer ${
-            currentOfficer?.role === "SUPER_ADMIN"
+            currentOfficer?.role === "System Admin" || currentOfficer?.role === "SUPER_ADMIN"
               ? "bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border-purple-500/30"
-              : currentOfficer?.role === "STATION_ADMIN"
+              : currentOfficer?.role === "Supervisory Officer" || currentOfficer?.role === "STATION_ADMIN"
               ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
               : "bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border-sky-500/30"
           }`}
         >
           <UserCheck size={14} />
           <div className="flex flex-col text-left leading-tight hidden lg:block">
-            <span className="text-[9px] text-slate-400 font-mono">{currentOfficer?.badge_id || "MH-POL-8821"}</span>
-            <span className="truncate max-w-[90px] text-[11px] text-slate-200">{currentOfficer?.name || "Officer"}</span>
+            <span className="text-[9px] text-slate-400 font-mono">{currentOfficer?.badge_id || "OFFICER"}</span>
+            <span className="truncate max-w-[120px] text-[11px] text-slate-200 font-bold">{currentOfficer?.name || "Officer"}</span>
           </div>
-          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-900 border border-slate-700 text-slate-300 uppercase font-bold">
-            {currentOfficer?.role === "SUPER_ADMIN" ? "SUPER" : currentOfficer?.role === "STATION_ADMIN" ? "ADMIN" : "IO"}
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-bold ${
+            currentOfficer?.role === "System Admin" || currentOfficer?.role === "SUPER_ADMIN"
+              ? "bg-purple-950/60 border-purple-500/40 text-purple-300"
+              : currentOfficer?.role === "Supervisory Officer" || currentOfficer?.role === "STATION_ADMIN"
+              ? "bg-amber-950/60 border-amber-500/40 text-amber-300"
+              : "bg-sky-950/60 border-sky-500/40 text-sky-300"
+          }`}>
+            {currentOfficer?.role === "System Admin" || currentOfficer?.role === "SUPER_ADMIN"
+              ? "System Admin"
+              : currentOfficer?.role === "Supervisory Officer" || currentOfficer?.role === "STATION_ADMIN"
+              ? "Supervisory Officer"
+              : "Analyst"}
           </span>
         </button>
       </div>

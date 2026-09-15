@@ -13,9 +13,11 @@ import UploadDatasetModal from "./components/UploadDatasetModal";
 import AuthModal, { DEMO_OFFICERS } from "./components/AuthModal";
 import LoginPage from "./components/LoginPage";
 import CypherConsoleModal from "./components/CypherConsoleModal";
+import EdgeEvidenceModal from "./components/EdgeEvidenceModal";
 import Sidebar from "./components/Sidebar";
 import DashboardView from "./components/DashboardView";
 import EntitiesView from "./components/EntitiesView";
+import { getCustomIngestedData } from "./services/normalizer";
 import {
   fetchGraph,
   fetchEntityDetail,
@@ -51,6 +53,8 @@ export default function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [timelineProgress, setTimelineProgress] = useState(100);
   const [viewMode, setViewMode] = useState("2d"); // "2d" | "3d"
+  const [selectedEdge, setSelectedEdge] = useState(null);
+  const [isEdgeModalOpen, setIsEdgeModalOpen] = useState(false);
 
   const [filterState, setFilterState] = useState("all");
   const [filterTier, setFilterTier] = useState("all");
@@ -62,6 +66,11 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  const handleSelectEdge = (edge) => {
+    setSelectedEdge(edge);
+    setIsEdgeModalOpen(true);
+  };
+
   const loadData = async () => {
     setIsLoading(true);
     try {
@@ -69,6 +78,22 @@ export default function App() {
         fetchGraph(),
         fetchPendingResolutions()
       ]);
+
+      // Merge persisted custom entities from localStorage (T4.2)
+      const customData = getCustomIngestedData();
+      if (customData?.nodes?.length > 0) {
+        const existingNodeIds = new Set((gData.nodes || []).map((n) => n.id));
+        const customNodesToAdd = customData.nodes.filter((n) => !existingNodeIds.has(n.id));
+        gData.nodes = [...(gData.nodes || []), ...customNodesToAdd];
+        gData.edges = [...(gData.edges || []), ...(customData.edges || [])];
+        if (gData.stats) {
+          gData.stats.total_nodes = gData.nodes.length;
+          gData.stats.displayed_nodes = gData.nodes.length;
+          gData.stats.total_edges = gData.edges.length;
+        }
+      }
+
+      window.currentSyndicateData = gData;
       setGraphData(gData);
       setPendingResolutions(pData || []);
 
@@ -158,10 +183,37 @@ export default function App() {
     showToast(`Tactical neutralization confirmed: Target marked as ARRESTED. Network routes severed.`);
   };
 
-  const handleIngestSuccess = (newNode) => {
-    if (!newNode) return;
-    loadData();
-    showToast(`Live FIR narrative ingested: '${newNode.name}' committed to database.`);
+  const handleIngestSuccess = (result) => {
+    if (!result) return;
+    const newNodes = result.nodes || [result];
+    const newEdges = result.edges || [];
+
+    setGraphData((prev) => {
+      if (!prev) return prev;
+      const existingIds = new Set(prev.nodes.map((n) => n.id));
+      const filteredNodes = newNodes.filter((n) => !existingIds.has(n.id));
+      const updated = {
+        ...prev,
+        nodes: [...prev.nodes, ...filteredNodes],
+        edges: [...prev.edges, ...newEdges],
+        stats: prev.stats
+          ? {
+              ...prev.stats,
+              total_nodes: prev.nodes.length + filteredNodes.length,
+              displayed_nodes: prev.nodes.length + filteredNodes.length,
+              total_edges: prev.edges.length + newEdges.length
+            }
+          : prev.stats
+      };
+      window.currentSyndicateData = updated;
+      return updated;
+    });
+
+    const firstNode = newNodes[0];
+    showToast(`Live Ingest Verified: ${newNodes.length} suspect(s) inserted on Orbit II with glowing telemetry.`);
+    if (firstNode) {
+      handleSelectNode(firstNode.id);
+    }
   };
 
   const handleLoginSuccess = (officer) => {
@@ -285,6 +337,8 @@ export default function App() {
                   filterTier={filterTier}
                   neutralizedNodeId={neutralizedNodeId}
                   timeProgress={timelineProgress}
+                  onSelectEdge={handleSelectEdge}
+                  selectedEdge={selectedEdge}
                 />
               )}
 
@@ -298,6 +352,8 @@ export default function App() {
                 onClose={() => setIsInspectorOpen(false)}
                 onOpenDossier={handleOpenDossier}
                 onSimulateArrest={handleSimulateArrest}
+                currentOfficer={currentOfficer}
+                onOpenAuthModal={() => setIsAuthModalOpen(true)}
               />
 
               {/* Bottom HITL Review Queue */}
@@ -384,6 +440,16 @@ export default function App() {
       <CypherConsoleModal
         isOpen={isCypherModalOpen}
         onClose={() => setIsCypherModalOpen(false)}
+      />
+
+      <EdgeEvidenceModal
+        isOpen={isEdgeModalOpen}
+        edge={selectedEdge}
+        onClose={() => setIsEdgeModalOpen(false)}
+        onSelectNode={(id) => {
+          handleSelectNode(id);
+          setIsEdgeModalOpen(false);
+        }}
       />
     </div>
   );

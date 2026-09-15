@@ -1,0 +1,206 @@
+{
+  "version": "1.0",
+  "departments": {
+    "MH_POLICE": {
+      "department_name": "Maharashtra State Police",
+      "jurisdiction": "State CID & Commissionerate of Police (Pune / Mumbai)",
+      "source_type": "csv",
+      "description": "Standard Maharashtra FIR CSV registry containing accused profiles, IPC sections, and forensic seizure identifiers.",
+      "entity_mapping": {
+        "accused_name": {
+          "canonical": "Person.name",
+          "transform": "clean_name",
+          "type": "string",
+          "category": "Identity",
+          "description": "Accused primary name sanitized of Honorifics (Bhai, Seth)"
+        },
+        "fir_number": {
+          "canonical": "FIR.id",
+          "prefix": "MH-",
+          "type": "string",
+          "category": "Legal",
+          "description": "Unique First Information Report crime identifier"
+        },
+        "police_station": {
+          "canonical": "FIR.station",
+          "type": "string",
+          "category": "Legal",
+          "description": "Jurisdictional Police Station registration unit"
+        },
+        "offense_type": {
+          "canonical": "FIR.crime_type",
+          "type": "string",
+          "category": "Legal",
+          "description": "Primary penal offense classification"
+        },
+        "section_ipc": {
+          "canonical": "FIR.sections",
+          "transform": "split_comma",
+          "type": "array",
+          "category": "Legal",
+          "description": "Indian Penal Code sections invoked"
+        },
+        "date_of_fir": {
+          "canonical": "FIR.incident_date",
+          "type": "datetime",
+          "category": "Temporal",
+          "description": "Date and timestamp of official FIR registry"
+        },
+        "seized_phone": {
+          "canonical": "Phone.number",
+          "transform": "normalize_phone",
+          "relationship": "OWNS_PHONE",
+          "type": "phone",
+          "category": "Telecom",
+          "description": "Confiscated telecom MSISDN normalized to E.164"
+        },
+        "vehicle_reg_no": {
+          "canonical": "Vehicle.registration",
+          "transform": "normalize_plate",
+          "relationship": "OWNS_VEHICLE",
+          "type": "vehicle",
+          "category": "Logistics",
+          "description": "Vehicle registration plate normalized to standard state RTO"
+        },
+        "location_district": {
+          "canonical": "Location.city",
+          "state": "Maharashtra",
+          "type": "location",
+          "category": "Geo",
+          "description": "District municipal jurisdiction"
+        }
+      }
+    },
+    "KA_POLICE": {
+      "department_name": "Karnataka State Police",
+      "jurisdiction": "Criminal Investigation Department (CID) & Bangalore City Police",
+      "source_type": "json",
+      "description": "Karnataka Police CCTNS Crime Record JSON payload with multilingual alias records and vehicle logs.",
+      "entity_mapping": {
+        "suspect_details": {
+          "canonical": "Person.name",
+          "transform": "clean_name",
+          "type": "string",
+          "category": "Identity",
+          "description": "Suspect legal name & registered aliases"
+        },
+        "crime_no": {
+          "canonical": "FIR.id",
+          "prefix": "KA-",
+          "type": "string",
+          "category": "Legal",
+          "description": "Crime occurrence registry number"
+        },
+        "ps_jurisdiction": {
+          "canonical": "FIR.station",
+          "type": "string",
+          "category": "Legal",
+          "description": "Police Station territorial jurisdiction"
+        },
+        "major_head": {
+          "canonical": "FIR.crime_type",
+          "type": "string",
+          "category": "Legal",
+          "description": "Major crime classification category"
+        },
+        "ipc_sections_invoked": {
+          "canonical": "FIR.sections",
+          "transform": "split_comma",
+          "type": "array",
+          "category": "Legal",
+          "description": "IPC and special local laws invoked"
+        },
+        "reported_datetime": {
+          "canonical": "FIR.incident_date",
+          "type": "datetime",
+          "category": "Temporal",
+          "description": "Incident reporting ISO timestamp"
+        },
+        "contact_number": {
+          "canonical": "Phone.number",
+          "transform": "normalize_phone",
+          "relationship": "OWNS_PHONE",
+          "type": "phone",
+          "category": "Telecom",
+          "description": "Registered telecom contact MSISDN"
+        },
+        "associated_vehicle": {
+          "canonical": "Vehicle.registration",
+          "transform": "normalize_plate",
+          "relationship": "OWNS_VEHICLE",
+          "type": "vehicle",
+          "category": "Logistics",
+          "description": "Observed transport vehicle plate"
+        },
+        "district": {
+          "canonical": "Location.city",
+          "state": "Karnataka",
+          "type": "location",
+          "category": "Geo",
+          "description": "District administrative boundary"
+        }
+      }
+    },
+    "FINANCIAL_INTEL": {
+      "department_name": "Financial Intelligence Unit (FIU-IND)",
+      "jurisdiction": "Central Economic Intelligence & Suspicious Activity Monitoring",
+      "source_type": "csv",
+      "description": "Hawala conduit ledger, suspicious cash transfers (STR), and shell banking transaction data.",
+      "entity_mapping": {
+        "transaction_id": {
+          "canonical": "Transaction.id",
+          "type": "string",
+          "category": "Financial",
+          "description": "Unique electronic transaction identifier / UTR"
+        },
+        "sender_name": {
+          "canonical": "Person.name",
+          "transform": "clean_name",
+          "type": "string",
+          "category": "Identity",
+          "description": "Remitter full name"
+        },
+        "sender_account": {
+          "canonical": "BankAccount.account_number",
+          "relationship": "BENEFICIARY_OF",
+          "type": "banking",
+          "category": "Financial",
+          "description": "Originating bank account number"
+        },
+        "receiver_name": {
+          "canonical": "Person.name",
+          "transform": "clean_name",
+          "type": "string",
+          "category": "Identity",
+          "description": "Beneficiary full name"
+        },
+        "receiver_account": {
+          "canonical": "BankAccount.account_number",
+          "relationship": "RECIPIENT_OF",
+          "type": "banking",
+          "category": "Financial",
+          "description": "Receiving bank account number"
+        },
+        "amount_inr": {
+          "canonical": "Transaction.amount",
+          "transform": "to_float",
+          "type": "currency",
+          "category": "Financial",
+          "description": "Transaction remittance value in INR (₹)"
+        },
+        "flag_reason": {
+          "canonical": "Transaction.flag",
+          "type": "string",
+          "category": "Forensic",
+          "description": "FIU AML/CFT alert classification code"
+        },
+        "timestamp": {
+          "canonical": "Transaction.date",
+          "type": "datetime",
+          "category": "Temporal",
+          "description": "Settlement date and timestamp"
+        }
+      }
+    }
+  }
+}

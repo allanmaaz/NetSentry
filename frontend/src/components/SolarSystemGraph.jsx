@@ -96,7 +96,9 @@ export default function SolarSystemGraph({
   filterState,
   filterTier,
   neutralizedNodeId = null,
-  timeProgress = 100
+  timeProgress = 100,
+  onSelectEdge,
+  selectedEdge
 }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -107,6 +109,8 @@ export default function SolarSystemGraph({
   const neutralizedNodeIdRef = useRef(neutralizedNodeId);
   const timeProgressRef = useRef(timeProgress);
   const hoveredNodeRef = useRef(null);
+  const hoveredEdgeRef = useRef(null);
+  const selectedEdgeRef = useRef(selectedEdge);
   const renderRef = useRef(null);
 
   const [hoveredNodeState, setHoveredNodeState] = useState(null);
@@ -118,6 +122,11 @@ export default function SolarSystemGraph({
   }, [selectedNodeId]);
 
   useEffect(() => {
+    selectedEdgeRef.current = selectedEdge;
+    if (renderRef.current) renderRef.current();
+  }, [selectedEdge]);
+
+  useEffect(() => {
     neutralizedNodeIdRef.current = neutralizedNodeId;
     if (renderRef.current) renderRef.current();
   }, [neutralizedNodeId]);
@@ -126,6 +135,26 @@ export default function SolarSystemGraph({
     timeProgressRef.current = timeProgress;
     if (renderRef.current) renderRef.current();
   }, [timeProgress]);
+
+  // Real-time animation loop for glowing orbital insertion (T4.2)
+  useEffect(() => {
+    let animId;
+    const hasSpawns = data?.nodes?.some(
+      (n) => n.isNewSpawn || (n.spawnTimestamp && Date.now() - n.spawnTimestamp < 60000)
+    );
+
+    if (hasSpawns) {
+      const loop = () => {
+        if (renderRef.current) renderRef.current();
+        animId = requestAnimationFrame(loop);
+      };
+      animId = requestAnimationFrame(loop);
+    }
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [data]);
 
 
   // Color Palette
@@ -228,6 +257,17 @@ export default function SolarSystemGraph({
       });
     });
 
+    // Shared node visibility predicate — uses timeProgressRef so it's always current
+    function isNodeVisible(node) {
+      const prog = timeProgressRef.current;
+      if (prog === undefined || prog === null || prog >= 95) return true;
+      const orbit = node.orbit_level ?? 2;
+      if (orbit === 0) return true;
+      if (orbit === 1) return prog >= 20;
+      if (orbit === 2) return prog >= 50;
+      return prog >= 75;
+    }
+
     nodesRef.current = filteredNodes;
     linksRef.current = filteredLinks;
 
@@ -283,19 +323,30 @@ export default function SolarSystemGraph({
         ctx.fillText(label, cx - 140, cy - r - 6);
       });
 
-      function isNodeVisible(node) {
-        const prog = timeProgressRef.current;
-        if (prog === undefined || prog === null || prog >= 95) return true;
-        const orbit = node.orbit_level ?? 2;
-        if (orbit === 0) return true;
-        if (orbit === 1) return prog >= 20;
-        if (orbit === 2) return prog >= 50;
-        return prog >= 75;
-      }
 
-      // 3. Draw Links / Constellations
       linksRef.current.forEach((link) => {
         if (!isNodeVisible(link.source) || !isNodeVisible(link.target)) return;
+
+        const isEdgeSelected = selectedEdgeRef.current && (
+          (selectedEdgeRef.current.source?.id === link.source?.id && selectedEdgeRef.current.target?.id === link.target?.id) ||
+          (selectedEdgeRef.current.source?.id === link.target?.id && selectedEdgeRef.current.target?.id === link.source?.id)
+        );
+        const isEdgeHovered = hoveredEdgeRef.current && (
+          (hoveredEdgeRef.current.source?.id === link.source?.id && hoveredEdgeRef.current.target?.id === link.target?.id) ||
+          (hoveredEdgeRef.current.source?.id === link.target?.id && hoveredEdgeRef.current.target?.id === link.source?.id)
+        );
+
+        // Highlight Halo when selected or hovered
+        if (isEdgeSelected || isEdgeHovered) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(link.source.x, link.source.y);
+          ctx.lineTo(link.target.x, link.target.y);
+          ctx.strokeStyle = isEdgeSelected ? "rgba(99, 102, 241, 0.7)" : "rgba(14, 165, 233, 0.5)";
+          ctx.lineWidth = 7;
+          ctx.stroke();
+          ctx.restore();
+        }
 
         ctx.beginPath();
         ctx.moveTo(link.source.x, link.source.y);
@@ -303,15 +354,15 @@ export default function SolarSystemGraph({
 
         if (link.type === "TRANSFERRED_FUNDS") {
           ctx.strokeStyle = colors.edgeFunds;
-          ctx.lineWidth = 2.2;
+          ctx.lineWidth = isEdgeSelected ? 3.5 : 2.2;
           ctx.setLineDash([]);
         } else if (link.type === "CALLED") {
           ctx.strokeStyle = colors.edgeCalls;
-          ctx.lineWidth = 1.8;
+          ctx.lineWidth = isEdgeSelected ? 3.0 : 1.8;
           ctx.setLineDash([]);
         } else {
-          ctx.strokeStyle = colors.edgeDefault;
-          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = isEdgeSelected ? "#475569" : colors.edgeDefault;
+          ctx.lineWidth = isEdgeSelected ? 2.5 : 1.2;
           ctx.setLineDash([3, 4]);
         }
         ctx.stroke();
@@ -352,6 +403,35 @@ export default function SolarSystemGraph({
           ctx.setLineDash([2, 2]);
           ctx.stroke();
           ctx.setLineDash([]);
+        }
+
+        // Glowing Orbital Insertion Animation (T4.2 for Orbit II new spawns)
+        if (node.isNewSpawn || (node.spawnTimestamp && Date.now() - node.spawnTimestamp < 60000)) {
+          const pulse = (Math.sin(Date.now() / 220) * 0.5 + 0.5);
+          ctx.save();
+
+          // Outer pulsating ring
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius + 14 + pulse * 8, 0, 2 * Math.PI);
+          ctx.strokeStyle = `rgba(56, 189, 248, ${0.4 + pulse * 0.5})`;
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+
+          // Inner glowing halo
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, radius + 7 + pulse * 4, 0, 2 * Math.PI);
+          ctx.strokeStyle = `rgba(168, 85, 247, ${0.6 + pulse * 0.4})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Insertion Banner
+          ctx.font = "bold 9px 'JetBrains Mono', monospace";
+          ctx.fillStyle = "#0284c7";
+          ctx.textAlign = "center";
+          ctx.fillText("✦ ORBIT II INSERTION", node.x, node.y - radius - 14);
+
+          ctx.restore();
         }
 
         // Selected Planet Ring
@@ -456,19 +536,9 @@ export default function SolarSystemGraph({
       const tx = (x - transform.x) / transform.k;
       const ty = (y - transform.y) / transform.k;
 
-      const prog = timeProgressRef.current;
-      const isVisible = (node) => {
-        if (prog === undefined || prog === null || prog >= 95) return true;
-        const orbit = node.orbit_level ?? 2;
-        if (orbit === 0) return true;
-        if (orbit === 1) return prog >= 20;
-        if (orbit === 2) return prog >= 50;
-        return prog >= 75;
-      };
-
       for (let i = nodesRef.current.length - 1; i >= 0; i--) {
         const n = nodesRef.current[i];
-        if (!isVisible(n)) continue;
+        if (!isNodeVisible(n)) continue;
         const r = (n.orbit_level === 0 ? 32 : n.radius || 15) + 6;
         const dx = tx - n.x;
         const dy = ty - n.y;
@@ -479,20 +549,80 @@ export default function SolarSystemGraph({
       return null;
     }
 
+    // Point to Segment Euclidean Distance Squared
+    function distToSegmentSquared(px, py, x1, y1, x2, y2) {
+      const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+      if (l2 === 0) return (px - x1) * (px - x1) + (py - y1) * (py - y1);
+      let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      const projX = x1 + t * (x2 - x1);
+      const projY = y1 + t * (y2 - y1);
+      return (px - projX) * (px - projX) + (py - projY) * (py - projY);
+    }
+
+    // Edge Hit Testing
+    function getEdgeAt(x, y) {
+      const transform = transformRef.current;
+      const tx = (x - transform.x) / transform.k;
+      const ty = (y - transform.y) / transform.k;
+      // Generous click tolerance (at least 7px in screen space)
+      const threshold = Math.max(7, 9 / transform.k);
+      const thresholdSq = threshold * threshold;
+
+      for (let i = linksRef.current.length - 1; i >= 0; i--) {
+        const link = linksRef.current[i];
+        if (!link.source || !link.target) continue;
+        if (!isNodeVisible(link.source) || !isNodeVisible(link.target)) continue;
+
+        const dSq = distToSegmentSquared(tx, ty, link.source.x, link.source.y, link.target.x, link.target.y);
+        if (dSq <= thresholdSq) {
+          return link;
+        }
+      }
+      return null;
+    }
+
     const handleMouseMove = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
-      canvas.style.cursor = node ? "pointer" : "default";
-      hoveredNodeRef.current = node;
-      setHoveredNodeState(node);
-      render();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const node = getNodeAt(mouseX, mouseY);
+      const edge = node ? null : getEdgeAt(mouseX, mouseY);
+
+      canvas.style.cursor = node || edge ? "pointer" : "default";
+
+      let needsRender = false;
+      if (hoveredNodeRef.current !== node) {
+        hoveredNodeRef.current = node;
+        setHoveredNodeState(node);
+        needsRender = true;
+      }
+      if (hoveredEdgeRef.current !== edge) {
+        hoveredEdgeRef.current = edge;
+        needsRender = true;
+      }
+
+      if (needsRender) {
+        render();
+      }
     };
 
     const handleClick = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const node = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const node = getNodeAt(mouseX, mouseY);
       if (node && onSelectNode) {
         onSelectNode(node.id); // Triggers drawer, but NO physics restart!
+        return;
+      }
+
+      const edge = getEdgeAt(mouseX, mouseY);
+      if (edge && onSelectEdge) {
+        onSelectEdge(edge);
+        render();
       }
     };
 

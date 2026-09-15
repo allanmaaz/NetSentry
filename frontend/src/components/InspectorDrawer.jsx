@@ -9,7 +9,8 @@ import {
   FileText,
   Users,
   ExternalLink,
-  MapPin
+  MapPin,
+  Lock
 } from "lucide-react";
 
 export default function InspectorDrawer({
@@ -17,7 +18,9 @@ export default function InspectorDrawer({
   isOpen,
   onClose,
   onOpenDossier,
-  onSimulateArrest
+  onSimulateArrest,
+  currentOfficer,
+  onOpenAuthModal
 }) {
   if (!isOpen || !entity) return null;
 
@@ -109,7 +112,7 @@ export default function InspectorDrawer({
             <span>AI Legal Explainability (Sec. 65B Audit)</span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed italic">
-            "{entity.legal_justification}"
+            &ldquo;{entity.legal_justification}&rdquo;
           </p>
         </div>
 
@@ -213,18 +216,29 @@ export default function InspectorDrawer({
       <div className="p-4 border-t border-slate-200 bg-slate-50/70 space-y-2">
         <button
           onClick={() => onSimulateArrest && onSimulateArrest(entity.id)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm"
+          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition shadow-sm cursor-pointer"
         >
           <ShieldAlert size={14} />
           Simulate Arrest (Tactical Impact)
         </button>
-        <button
-          onClick={() => onOpenDossier(entity)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition shadow-sm"
-        >
-          <FileText size={14} />
-          Export Court Dossier (Section 65B)
-        </button>
+        {currentOfficer?.role === "Analyst" || currentOfficer?.role === "FIELD_INVESTIGATOR" ? (
+          <button
+            onClick={onOpenAuthModal}
+            title="Clearance Restricted: Section 65B court evidence export requires Supervisory Officer or System Admin elevation. Click to switch persona."
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-mono text-xs font-bold transition shadow-xs cursor-pointer"
+          >
+            <Lock size={14} className="text-amber-600" />
+            <span>Section 65B Export (Clearance Locked)</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => onOpenDossier(entity)}
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition shadow-sm cursor-pointer"
+          >
+            <FileText size={14} />
+            Export Court Dossier (Section 65B)
+          </button>
+        )}
       </div>
     </aside>
   );

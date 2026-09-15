@@ -3,26 +3,26 @@ import { Shield, Lock, UserCheck, Key, CheckCircle2, AlertTriangle, X, ChevronRi
 
 export const DEMO_OFFICERS = [
   {
-    badge_id: "MH-POL-8821",
-    name: "Rajesh Patil",
-    rank: "Inspector / SHO",
-    station: "Bund Garden PS, Pune",
-    state: "Maharashtra",
-    role: "STATION_ADMIN",
-    color: "amber",
-    tag: "Station House Officer",
-    permissions: ["Read Dossiers", "Approve HITL Merges", "Simulate Arrests", "Ingest FIRs"]
-  },
-  {
     badge_id: "KA-CID-4109",
     name: "Ananya Hegde",
     rank: "Sub-Inspector / Field IO",
     station: "Cubbon Park PS, Bengaluru",
     state: "Karnataka",
-    role: "FIELD_INVESTIGATOR",
+    role: "Analyst",
     color: "sky",
-    tag: "Field Investigator",
-    permissions: ["Read Dossiers", "Multilingual Search", "View Topology"]
+    tag: "Intelligence Analyst",
+    permissions: ["Read Dossiers", "Multilingual Search", "Topology Exploration"]
+  },
+  {
+    badge_id: "MH-POL-8821",
+    name: "Rajesh Patil",
+    rank: "Inspector / SHO",
+    station: "Bund Garden PS, Pune",
+    state: "Maharashtra",
+    role: "Supervisory Officer",
+    color: "amber",
+    tag: "Supervisory Officer",
+    permissions: ["Read Dossiers", "Approve HITL Merges", "Simulate Arrests", "Ingest FIRs"]
   },
   {
     badge_id: "NCRB-DIR-0001",
@@ -30,10 +30,10 @@ export const DEMO_OFFICERS = [
     rank: "Special Task Force Director",
     station: "NCRB HQ, New Delhi",
     state: "National Grid",
-    role: "SUPER_ADMIN",
+    role: "System Admin",
     color: "purple",
-    tag: "Super Admin",
-    permissions: ["Full Override", "Audit Trail Export", "Cross-State Sync", "All Permissions"]
+    tag: "System Admin",
+    permissions: ["Full Override", "Section 65B Export", "Cross-State Sync", "All Permissions"]
   }
 ];
 
@@ -159,8 +159,8 @@ export default function AuthModal({ isOpen, onClose, currentOfficer, onSelectOff
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                          officer.role === "SUPER_ADMIN" ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" :
-                          officer.role === "STATION_ADMIN" ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" :
+                          officer.role === "System Admin" || officer.role === "SUPER_ADMIN" ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" :
+                          officer.role === "Supervisory Officer" || officer.role === "STATION_ADMIN" ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" :
                           "bg-sky-500/20 text-sky-300 border border-sky-500/30"
                         }`}>
                           {officer.tag}

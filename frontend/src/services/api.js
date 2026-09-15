@@ -20,18 +20,29 @@ export function setAuthToken(token) {
 }
 
 export function getStoredOfficer() {
-  const data = localStorage.getItem("netsentry_officer");
-  if (data) {
+  const sessionData = sessionStorage.getItem("netsentry_officer");
+  if (sessionData) {
     try {
-      return JSON.parse(data);
+      return JSON.parse(sessionData);
+    } catch (e) {}
+  }
+  const localData = localStorage.getItem("netsentry_officer");
+  if (localData) {
+    try {
+      return JSON.parse(localData);
     } catch (e) {}
   }
   return null;
 }
 
 export function setStoredOfficer(officer) {
-  if (officer) localStorage.setItem("netsentry_officer", JSON.stringify(officer));
-  else localStorage.removeItem("netsentry_officer");
+  if (officer) {
+    sessionStorage.setItem("netsentry_officer", JSON.stringify(officer));
+    localStorage.setItem("netsentry_officer", JSON.stringify(officer));
+  } else {
+    sessionStorage.removeItem("netsentry_officer");
+    localStorage.removeItem("netsentry_officer");
+  }
 }
 
 export function getAuthHeaders(extraHeaders = {}) {

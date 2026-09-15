@@ -99,14 +99,14 @@ export default function HITLReviewQueue({
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2">
-                    {currentOfficer?.role === "FIELD_INVESTIGATOR" ? (
+                    {currentOfficer?.role === "Analyst" || currentOfficer?.role === "FIELD_INVESTIGATOR" ? (
                       <button
                         onClick={onOpenAuthModal}
-                        title="Restricted: Requires Station Admin or Super Admin role. Click to switch persona."
-                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 border border-slate-200 text-slate-500 rounded-xl font-mono text-[11px] font-bold transition shadow-xs cursor-pointer"
+                        title="Restricted: Role 'Analyst' cannot execute entity merges. Supervisory Officer or System Admin clearance required. Click to switch persona."
+                        className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100/80 text-amber-800 border border-amber-300 rounded-xl font-mono text-[11px] font-bold transition shadow-xs cursor-pointer"
                       >
-                        <Lock size={13} className="text-amber-500" />
-                        <span>Admin Clearance Req.</span>
+                        <Lock size={13} className="text-amber-600" />
+                        <span>Merge Locked (Analyst)</span>
                       </button>
                     ) : (
                       <button
@@ -121,9 +121,9 @@ export default function HITLReviewQueue({
                     )}
                     <button
                       onClick={() => onResolve(cand.candidate_id, "REJECT")}
-                      disabled={isProcessing || currentOfficer?.role === "FIELD_INVESTIGATOR"}
-                      title="Reject and Flag as Separate Entities"
-                      className="p-2 border border-slate-300 hover:bg-slate-100 text-slate-600 rounded-xl transition disabled:opacity-50 cursor-pointer"
+                      disabled={isProcessing || currentOfficer?.role === "Analyst" || currentOfficer?.role === "FIELD_INVESTIGATOR"}
+                      title={currentOfficer?.role === "Analyst" || currentOfficer?.role === "FIELD_INVESTIGATOR" ? "Restricted for Analyst role" : "Reject and Flag as Separate Entities"}
+                      className="p-2 border border-slate-300 hover:bg-slate-100 text-slate-600 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       <X size={14} />
                     </button>

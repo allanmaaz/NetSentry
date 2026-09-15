@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, UploadCloud, FileText, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { uploadCsvText, uploadCsvFile } from "../services/api";
+import { normalizeCSVToEntities, saveCustomIngestedData } from "../services/normalizer";
 
 const SAMPLE_CSV_TEMPLATE = `name,alias,phone,vehicle,police_station,state,sections,crime_type,risk_score
 "Dawood Ibrahim","Muchhad","+91-9820099881","MH-01-BK-1111","Dongri PS","Maharashtra","302, 120B IPC, MCOCA","Organized Crime & Extortion",99
@@ -43,9 +44,27 @@ export default function UploadDatasetModal({ isOpen, onClose, onUploadSuccess })
         setStatusMessage(null);
       }, 1800);
     } catch (err) {
-      console.error("Upload error:", err);
-      setIsError(true);
-      setStatusMessage("Failed to ingest records. Please check CSV format.");
+      console.warn("Backend API offline, normalizing via client Schema Adapter:", err);
+      try {
+        const result = normalizeCSVToEntities(csvText, "MH_POLICE");
+        if (result.nodes.length > 0) {
+          saveCustomIngestedData(result.nodes, result.edges);
+          setIsError(false);
+          setStatusMessage(`Successfully ingested ${result.nodes.length} records into investigation graph via Schema Adapter!`);
+          if (onUploadSuccess) onUploadSuccess();
+          setTimeout(() => {
+            onClose();
+            setStatusMessage(null);
+          }, 1800);
+        } else {
+          setIsError(true);
+          setStatusMessage("Failed to ingest records. Please check CSV format.");
+        }
+      } catch (parseErr) {
+        console.error("Client normalization error:", parseErr);
+        setIsError(true);
+        setStatusMessage("Failed to ingest records. Please check CSV format.");
+      }
     } finally {
       setIsUploading(false);
     }
