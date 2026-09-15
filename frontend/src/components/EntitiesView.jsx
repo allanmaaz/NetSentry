@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { Users, Search, Filter, Phone, Car, Shield, FileText, Crosshair, ArrowUpRight } from "lucide-react";
+import { Users, Search, Phone, Car, ArrowUpRight, FileText, ChevronRight, X } from "lucide-react";
 
 export default function EntitiesView({
   nodes,
   onSelectNode,
   onOpenDossier,
-  onSimulateArrest,
   onNavigateToGraph
 }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -13,15 +12,8 @@ export default function EntitiesView({
   const [filterTier, setFilterTier] = useState("all");
 
   const filteredNodes = (nodes || []).filter((node) => {
-    // State filter
-    if (filterState !== "all" && node.state !== filterState) {
-      return false;
-    }
-    // Tier filter
-    if (filterTier !== "all" && node.risk_tier !== filterTier) {
-      return false;
-    }
-    // Search filter
+    if (filterState !== "all" && node.state !== filterState) return false;
+    if (filterTier !== "all" && node.risk_tier !== filterTier) return false;
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       const matchName = node.name?.toLowerCase().includes(q);
@@ -36,194 +28,292 @@ export default function EntitiesView({
 
   const handleInspect = (node) => {
     onSelectNode(node.id);
-    onOpenDossier(node);
+    if (onOpenDossier) onOpenDossier(node);
   };
 
-  const handleLocateOnGraph = (nodeId) => {
+  const handleViewGraph = (nodeId) => {
     onSelectNode(nodeId);
-    onNavigateToGraph("graph");
+    if (onNavigateToGraph) onNavigateToGraph("graph");
   };
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-slate-900 text-slate-100 p-6 space-y-5 font-sans">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+    <div className="flex-1 h-full overflow-y-auto bg-slate-950 text-slate-100 p-4 sm:p-6 space-y-4 font-sans">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl font-black font-mono tracking-tight text-white uppercase flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
               <Users size={20} className="text-sky-400" />
-              SUSPECTS & IDENTIFIER REGISTRY
+              Suspect Registry
             </h1>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-              {filteredNodes.length} OF {nodes?.length || 8} RECORDS
+            <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-900 text-slate-300 border border-slate-800">
+              {filteredNodes.length} suspects
             </span>
           </div>
-          <p className="text-xs text-slate-400 font-sans">
-            Cross-Jurisdiction Criminal Identities, Phone Intercepts & Seized Vehicles
+          <p className="text-xs text-slate-400 mt-0.5">
+            Active criminal profiles, alias records, and seized physical identifiers
           </p>
         </div>
 
-        <button
-          onClick={() => onNavigateToGraph("graph")}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-mono font-bold transition border border-slate-700 cursor-pointer self-start sm:self-auto"
-        >
-          <span>VIEW IN 2D/3D GRAPH</span>
-          <ArrowUpRight size={14} />
-        </button>
+        {onNavigateToGraph && (
+          <button
+            onClick={() => onNavigateToGraph("graph")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-medium transition border border-slate-800 cursor-pointer self-start sm:self-auto"
+          >
+            <span>Open Network Map</span>
+            <ArrowUpRight size={14} className="text-sky-400" />
+          </button>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+      <div className="p-3 sm:p-4 rounded-2xl bg-slate-900/90 border border-slate-800/90 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by suspect name, alias, phone (+91), or vehicle (MH-12)..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition"
+            placeholder="Search by suspect name, alias, phone, or vehicle..."
+            className="w-full pl-9 pr-8 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition"
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-1"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <select
-            value={filterState}
-            onChange={(e) => setFilterState(e.target.value)}
-            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 outline-none hover:bg-slate-850 transition cursor-pointer"
+        {/* State Quick Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 shrink-0">
+          <button
+            onClick={() => setFilterState("all")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
+              filterState === "all"
+                ? "bg-sky-500 text-slate-950 font-bold shadow-sm"
+                : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+            }`}
           >
-            <option value="all">All States</option>
-            <option value="Maharashtra">Maharashtra Police</option>
-            <option value="Karnataka">Karnataka Police</option>
-          </select>
-
-          <select
-            value={filterTier}
-            onChange={(e) => setFilterTier(e.target.value)}
-            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 outline-none hover:bg-slate-850 transition cursor-pointer"
+            All States
+          </button>
+          <button
+            onClick={() => setFilterState(filterState === "Maharashtra" ? "all" : "Maharashtra")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
+              filterState === "Maharashtra"
+                ? "bg-emerald-500 text-slate-950 font-bold shadow-sm"
+                : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+            }`}
           >
-            <option value="all">All Threat Tiers</option>
-            <option value="critical">Critical Risk</option>
-            <option value="high">High Risk</option>
-            <option value="moderate">Moderate Risk</option>
-          </select>
+            Maharashtra
+          </button>
+          <button
+            onClick={() => setFilterState(filterState === "Karnataka" ? "all" : "Karnataka")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
+              filterState === "Karnataka"
+                ? "bg-sky-500 text-slate-950 font-bold shadow-sm"
+                : "bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800"
+            }`}
+          >
+            Karnataka
+          </button>
+          <button
+            onClick={() => setFilterTier(filterTier === "critical" ? "all" : "critical")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
+              filterTier === "critical"
+                ? "bg-red-500 text-white font-bold shadow-sm"
+                : "bg-slate-950 text-red-400 hover:text-red-300 border border-red-500/30"
+            }`}
+          >
+            Critical Only
+          </button>
         </div>
       </div>
 
-      {/* Suspects Table */}
-      <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/80 shadow-md">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs">
-            <thead className="bg-slate-950 text-slate-400 text-[11px] uppercase border-b border-slate-800">
-              <tr>
-                <th className="py-3 px-4 font-bold text-slate-300">Suspect / Identity</th>
-                <th className="py-3 px-4 font-bold text-slate-300">Aliases</th>
-                <th className="py-3 px-4 font-bold text-slate-300">Jurisdiction</th>
-                <th className="py-3 px-4 font-bold text-slate-300">Intercepted MSISDN</th>
-                <th className="py-3 px-4 font-bold text-slate-300">Vehicle Transit</th>
-                <th className="py-3 px-4 font-bold text-slate-300">Orbit</th>
-                <th className="py-3 px-4 font-bold text-slate-300">Risk Score</th>
-                <th className="py-3 px-4 font-bold text-slate-300 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-850 text-slate-200">
-              {filteredNodes.map((node) => {
-                const phone = node.details?.phones?.[0] || "—";
-                const vehicle = node.details?.vehicles?.[0] || "—";
-                const aliases = node.details?.aliases?.join(", ") || "—";
-                const isKingpin = node.orbit_level === 0;
+      {/* MOBILE VIEW: Clean Cards (< 768px) */}
+      <div className="grid grid-cols-1 gap-3 md:hidden">
+        {filteredNodes.map((node) => {
+          const phone = node.details?.phones?.[0];
+          const vehicle = node.details?.vehicles?.[0];
+          const aliases = node.details?.aliases || [];
+          const isCritical = node.risk_score >= 85;
 
-                return (
-                  <tr key={node.id} className="hover:bg-slate-900/60 transition group">
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-white group-hover:text-amber-300 transition">
-                        {node.name}
+          return (
+            <div
+              key={node.id}
+              onClick={() => handleInspect(node)}
+              className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md space-y-3 cursor-pointer hover:border-slate-700 transition"
+            >
+              {/* Top Row: Name + State + Risk */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-base text-white truncate">
+                    {node.name}
+                  </h3>
+                  {aliases.length > 0 && (
+                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                      aka {aliases.join(", ")}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span
+                    className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
+                      isCritical
+                        ? "bg-red-500/10 text-red-400 border-red-500/30"
+                        : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                    }`}
+                  >
+                    Risk {node.risk_score}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {node.state}
+                  </span>
+                </div>
+              </div>
+
+              {/* Middle: Identifiers */}
+              {(phone || vehicle) && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {phone && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 text-sky-400 text-xs font-mono border border-slate-800">
+                      <Phone size={12} /> {phone}
+                    </span>
+                  )}
+                  {vehicle && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 text-amber-400 text-xs font-mono border border-slate-800">
+                      <Car size={12} /> {vehicle}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Bottom: Action */}
+              <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-medium">
+                <span>Orbit {node.orbit_level} Hierarchy</span>
+                <span className="text-sky-400 font-semibold flex items-center gap-1">
+                  View Dossier <ChevronRight size={14} />
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* DESKTOP VIEW: Non-Truncated Table (>= 768px) */}
+      <div className="hidden md:block border border-slate-800 rounded-2xl overflow-hidden bg-slate-900/90 shadow-md">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-slate-950/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
+            <tr>
+              <th className="py-3.5 pl-6 pr-4">Suspect Profile</th>
+              <th className="py-3.5 px-4">State</th>
+              <th className="py-3.5 px-4">Phone & Vehicle</th>
+              <th className="py-3.5 px-4">Threat Level</th>
+              <th className="py-3.5 pl-4 pr-6 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-850">
+            {filteredNodes.map((node) => {
+              const phone = node.details?.phones?.[0];
+              const vehicle = node.details?.vehicles?.[0];
+              const aliases = node.details?.aliases || [];
+              const isCritical = node.risk_score >= 85;
+
+              return (
+                <tr
+                  key={node.id}
+                  onClick={() => handleInspect(node)}
+                  className="hover:bg-slate-800/50 transition cursor-pointer group"
+                >
+                  {/* Suspect Column with Generous Left Padding */}
+                  <td className="py-4 pl-6 pr-4">
+                    <div className="font-bold text-white group-hover:text-sky-300 transition text-sm">
+                      {node.name}
+                    </div>
+                    {aliases.length > 0 && (
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        aka {aliases.join(", ")}
                       </div>
-                      <div className="text-[10px] text-slate-500 font-mono">
-                        {node.id}
-                      </div>
-                    </td>
+                    )}
+                  </td>
 
-                    <td className="py-3.5 px-4 text-slate-400 max-w-[180px] truncate text-[11px]">
-                      {aliases}
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
+                  {/* State */}
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <span
+                      className={`text-xs px-2.5 py-1 rounded-full font-medium border ${
                         node.state === "Maharashtra"
                           ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
                           : "bg-sky-500/10 text-sky-300 border-sky-500/20"
-                      }`}>
-                        {node.state}
-                      </span>
-                    </td>
+                      }`}
+                    >
+                      {node.state}
+                    </span>
+                  </td>
 
-                    <td className="py-3.5 px-4 text-slate-300 text-[11px] whitespace-nowrap">
-                      {phone !== "—" ? (
-                        <span className="flex items-center gap-1 text-sky-400">
+                  {/* Identifiers */}
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <div className="space-y-1">
+                      {phone && (
+                        <div className="flex items-center gap-1.5 text-xs text-sky-400 font-mono">
                           <Phone size={12} /> {phone}
-                        </span>
-                      ) : "—"}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-slate-300 text-[11px] whitespace-nowrap">
-                      {vehicle !== "—" ? (
-                        <span className="flex items-center gap-1 text-amber-400">
+                        </div>
+                      )}
+                      {vehicle && (
+                        <div className="flex items-center gap-1.5 text-xs text-amber-400 font-mono">
                           <Car size={12} /> {vehicle}
-                        </span>
-                      ) : "—"}
-                    </td>
+                        </div>
+                      )}
+                      {!phone && !vehicle && (
+                        <span className="text-slate-500 italic">—</span>
+                      )}
+                    </div>
+                  </td>
 
-                    <td className="py-3.5 px-4">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase ${
-                        isKingpin
-                          ? "bg-red-500/20 text-red-300 border-red-500/40"
-                          : node.orbit_level === 1
-                          ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                          : "bg-slate-800 text-slate-300 border-slate-700"
-                      }`}>
-                        Orbit {node.orbit_level}
+                  {/* Threat Level */}
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          isCritical ? "bg-red-500 shadow-sm shadow-red-500/50" : "bg-amber-500 shadow-sm shadow-amber-500/50"
+                        }`}
+                      />
+                      <span className="font-bold text-white text-xs">
+                        {node.risk_score}
                       </span>
-                    </td>
+                      <span className="text-[11px] text-slate-400 uppercase">
+                        {node.risk_tier}
+                      </span>
+                    </div>
+                  </td>
 
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-black text-sm ${
-                          node.risk_score >= 85 ? "text-red-400" : "text-amber-400"
-                        }`}>
-                          {node.risk_score}
-                        </span>
-                        <span className="text-[9px] uppercase text-slate-500 font-bold">
-                          {node.risk_tier}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => handleLocateOnGraph(node.id)}
-                          title="Locate on Celestial Canvas"
-                          className="p-1.5 bg-slate-900 hover:bg-amber-500/20 text-slate-400 hover:text-amber-300 border border-slate-750 rounded-lg transition cursor-pointer"
-                        >
-                          <Crosshair size={14} />
-                        </button>
-
-                        <button
-                          onClick={() => handleInspect(node)}
-                          title="View Section 65B Dossier"
-                          className="p-1.5 bg-slate-900 hover:bg-sky-500/20 text-slate-400 hover:text-sky-300 border border-slate-750 rounded-lg transition cursor-pointer"
-                        >
-                          <FileText size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                  {/* Action */}
+                  <td className="py-4 pl-4 pr-6 text-right whitespace-nowrap">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInspect(node);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 hover:text-white text-xs font-medium transition border border-slate-700 inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <FileText size={13} />
+                      <span>Dossier</span>
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
+
+      {filteredNodes.length === 0 && (
+        <div className="p-8 text-center text-slate-500 text-xs">
+          No suspects match the filter criteria.
+        </div>
+      )}
     </div>
   );
 }

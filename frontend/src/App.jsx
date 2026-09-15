@@ -38,6 +38,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getStoredOfficer());
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCypherModalOpen, setIsCypherModalOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [graphData, setGraphData] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [entityDetail, setEntityDetail] = useState(null);
@@ -291,16 +292,39 @@ export default function App() {
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setIsMobileSidebarOpen(false);
+        }}
         currentOfficer={currentOfficer}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onOpenIngest={() => setIsIngestModalOpen(true)}
-        onOpenUploadCsv={() => setIsUploadModalOpen(true)}
-        onOpenMetrics={() => setIsMetricsModalOpen(true)}
-        onOpenCypherModal={() => setIsCypherModalOpen(true)}
-        onOpenLedger={() => setIsLedgerOpen(true)}
+        onOpenAuthModal={() => {
+          setIsAuthModalOpen(true);
+          setIsMobileSidebarOpen(false);
+        }}
+        onOpenIngest={() => {
+          setIsIngestModalOpen(true);
+          setIsMobileSidebarOpen(false);
+        }}
+        onOpenUploadCsv={() => {
+          setIsUploadModalOpen(true);
+          setIsMobileSidebarOpen(false);
+        }}
+        onOpenMetrics={() => {
+          setIsMetricsModalOpen(true);
+          setIsMobileSidebarOpen(false);
+        }}
+        onOpenCypherModal={() => {
+          setIsCypherModalOpen(true);
+          setIsMobileSidebarOpen(false);
+        }}
+        onOpenLedger={() => {
+          setIsLedgerOpen(true);
+          setIsMobileSidebarOpen(false);
+        }}
         onLogout={handleLogout}
         pendingCount={pendingResolutions?.length || 0}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* Main Operational Container */}
@@ -324,6 +348,7 @@ export default function App() {
           onViewModeChange={setViewMode}
           currentOfficer={currentOfficer}
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onToggleMobileMenu={() => setIsMobileSidebarOpen((prev) => !prev)}
         />
 
         {/* Dynamic Multi-View Workspace */}
