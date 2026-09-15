@@ -471,26 +471,6 @@ export default function App() {
             </div>
           )}
         </div>
-
-        {/* Accessible Semantic SEO Footer */}
-        <footer className="h-7 bg-slate-950 border-t border-slate-800/80 px-5 flex items-center justify-between text-[11px] text-slate-500 font-mono shrink-0 z-20">
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-bold">NetSentry Sovereign v2.0</span>
-            <span className="text-slate-700">•</span>
-            <span className="text-emerald-400">BSA Section 65B Certified</span>
-            <span className="text-slate-700 hidden sm:inline">•</span>
-            <span className="text-slate-500 hidden sm:inline">SIH 2026 Problem 26189</span>
-          </div>
-          <nav aria-label="Quick Access Navigation" className="flex items-center gap-3">
-            <button onClick={() => setActiveTab("dashboard")} className={`hover:text-slate-200 transition ${activeTab === 'dashboard' ? 'text-indigo-400 font-bold' : ''}`}>Dashboard</button>
-            <span className="text-slate-700">•</span>
-            <button onClick={() => setActiveTab("graph")} className={`hover:text-slate-200 transition ${activeTab === 'graph' ? 'text-indigo-400 font-bold' : ''}`}>Graph</button>
-            <span className="text-slate-700">•</span>
-            <button onClick={() => setActiveTab("entities")} className={`hover:text-slate-200 transition ${activeTab === 'entities' ? 'text-indigo-400 font-bold' : ''}`}>Directory</button>
-            <span className="text-slate-700">•</span>
-            <a href="https://github.com/allanmaaz/NetSentry" target="_blank" rel="noopener noreferrer" className="hover:text-sky-400 transition">GitHub</a>
-          </nav>
-        </footer>
       </div>
 
       {/* Global Modals Accessible Across All Views */}

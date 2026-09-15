@@ -218,27 +218,27 @@ export default function BlockchainLedgerModal({ isOpen, onClose }) {
         {/* ── Modal Header ─────────────────────────────────────────────── */}
         <div className="px-6 py-4 border-b border-slate-800 bg-slate-950 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-700 flex items-center justify-center shadow-lg shadow-amber-500/20 border border-amber-400/30 shrink-0">
-              <Link2 size={22} className="text-slate-950" />
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+              <Link2 size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-black font-mono text-sm tracking-widest text-white uppercase">
-                  Section 65B Chain of Custody Ledger
-                </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  SHA-256 VERIFIED
+                <h2 className="font-bold text-sm text-white">
+                  Evidence History & Court Audit
+                </h2>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Court Admissible (Sec 65B)
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono">
-                Tamper-proof BSA 2023 forensic audit blockchain • Web Crypto API • Air-gapped
+              <p className="text-xs text-slate-400">
+                Tamper-proof digital log of all case actions, evidence uploads, and officer approvals
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -254,15 +254,15 @@ export default function BlockchainLedgerModal({ isOpen, onClose }) {
         }`}>
           <div className="flex items-center gap-4">
             {/* Chain integrity badge */}
-            <div className={`flex items-center gap-2 text-sm font-mono font-bold ${
+            <div className={`flex items-center gap-2 text-xs font-semibold ${
               chainValid === null ? "text-slate-400" : chainValid ? "text-emerald-400" : "text-red-400"
             }`}>
               {chainValid === null ? (
-                <><Hash size={16} className="animate-pulse" /> CHAIN NOT YET VERIFIED</>
+                <><Hash size={14} className="animate-pulse" /> Verifying Records...</>
               ) : chainValid ? (
-                <><CheckCircle2 size={16} /> ALL {totalBlocks} BLOCKS VERIFIED — CHAIN INTACT</>
+                <><CheckCircle2 size={14} /> All {totalBlocks} Logged Actions Verified — Evidence Untampered</>
               ) : (
-                <><AlertTriangle size={16} /> CHAIN INTEGRITY VIOLATION DETECTED</>
+                <><AlertTriangle size={14} /> Evidence Tampering Detected</>
               )}
             </div>
 

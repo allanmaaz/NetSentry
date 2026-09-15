@@ -1,37 +1,55 @@
 import React, { useState, useEffect } from "react";
-import { Database, Play, X, Zap, CheckCircle2, RefreshCw, Copy, Code, Table, Shield, Sparkles } from "lucide-react";
+import {
+  Database,
+  Search,
+  X,
+  RefreshCw,
+  Table,
+  Code,
+  Shield,
+  Sparkles,
+  Users,
+  MapPin,
+  Phone,
+  Play
+} from "lucide-react";
 import { fetchDatabaseStatus, executeCypherQuery } from "../services/api";
 
-const PRESET_QUERIES = [
+const PRESET_SEARCHES = [
   {
-    title: "1. Find Kingpin (Orbit 0)",
-    desc: "Unmask central mastermind via Betweenness Centrality",
+    id: "kingpin",
+    title: "Syndicate Kingpin",
+    desc: "Unmask central mastermind controlling operations",
     query: "MATCH (k:Person {orbit_level: 0})\nRETURN k.canonical_name, k.risk_tier, k.betweenness_score, k.jurisdictions"
   },
   {
-    title: "2. Cross-Border Conduits",
-    desc: "Detect suspects operating across Maharashtra and Karnataka",
+    id: "cross_border",
+    title: "Cross-State Suspects",
+    desc: "Suspects operating in Maharashtra & Karnataka",
     query: "MATCH (p:Person)\nWHERE p.is_cross_jurisdiction = true\nRETURN p.canonical_name, p.risk_score, p.orbit_level, p.primary_state"
   },
   {
-    title: "3. Intercepted Links",
-    desc: "Trace telecom taps and financial Hawala conduits",
+    id: "links",
+    title: "Linked Phone Intercepts",
+    desc: "Trace connected communications & couriers",
     query: "MATCH (s:Person)-[r:COMMAND_LINK]->(t:Person)\nRETURN s.name, type(r), t.name"
   },
   {
-    title: "4. All Syndicate Nodes",
-    desc: "Retrieve all active nodes in the criminal network",
+    id: "all",
+    title: "All Suspects",
+    desc: "Complete active roster of tracked figures",
     query: "MATCH (p:Person)\nRETURN p.id, p.canonical_name, p.risk_score, p.risk_tier, p.orbit_level\nLIMIT 10"
   }
 ];
 
 export default function CypherConsoleModal({ isOpen, onClose }) {
-  const [query, setQuery] = useState(PRESET_QUERIES[0].query);
+  const [activePreset, setActivePreset] = useState(PRESET_SEARCHES[0].id);
+  const [query, setQuery] = useState(PRESET_SEARCHES[0].query);
   const [dbStatus, setDbStatus] = useState(null);
   const [queryResult, setQueryResult] = useState(null);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [viewFormat, setViewFormat] = useState("table"); // "table" | "json"
-  const [copied, setCopied] = useState(false);
+  const [showTechnicalQuery, setShowTechnicalQuery] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -41,8 +59,12 @@ export default function CypherConsoleModal({ isOpen, onClose }) {
   }, [isOpen]);
 
   const loadStatus = async () => {
-    const status = await fetchDatabaseStatus();
-    setDbStatus(status);
+    try {
+      const status = await fetchDatabaseStatus();
+      setDbStatus(status);
+    } catch (e) {
+      console.warn("DB status check:", e);
+    }
   };
 
   const handleRunQuery = async (queryToRun) => {
@@ -55,232 +77,183 @@ export default function CypherConsoleModal({ isOpen, onClose }) {
       console.error(err);
     } finally {
       setIsExecuting(false);
-      loadStatus();
     }
   };
 
-  const handlePresetClick = (preset) => {
+  const handleSelectPreset = (preset) => {
+    setActivePreset(preset.id);
     setQuery(preset.query);
     handleRunQuery(preset.query);
   };
 
-  const copyJson = () => {
-    if (queryResult) {
-      navigator.clipboard.writeText(JSON.stringify(queryResult, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   if (!isOpen) return null;
 
+  // Filter rows if user types in search bar
+  const displayedRows = (queryResult?.rows || []).filter((row) => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase();
+    return Object.values(row).some((val) =>
+      String(val).toLowerCase().includes(q)
+    );
+  });
+
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden text-slate-100 font-sans">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden text-slate-100 font-sans">
         
-        {/* Top Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-slate-950 flex items-center justify-center font-bold shadow-md">
-              <Database size={20} className="text-slate-950" />
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold">
+              <Database size={18} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold font-mono tracking-wider text-slate-100 uppercase">
-                  NEO4J GRAPH DATA SCIENCE (GDS) // CYPHER 5.x CONSOLE
+                <h2 className="font-bold text-sm text-white">
+                  Search Criminal Database
                 </h2>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  {dbStatus?.is_neo4j_connected ? "BOLT ONLINE" : "RESILIENT GRAPHX"}
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Online
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-mono">
-                Real-Time Graph Database Query Terminal & Accelerated Cache Subsystem
+              <p className="text-xs text-slate-400">
+                Find suspects, cross-border connections, and phone or vehicle links
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Database Status Strip */}
-        <div className="px-5 py-2.5 bg-slate-950/60 border-b border-slate-800 flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 gap-2">
-          <div className="flex items-center gap-4">
-            <div>
-              <span className="text-slate-500 text-[10px] block">GRAPH ENGINE</span>
-              <span className="text-emerald-400 font-bold">{dbStatus?.active_engine || "NetSentry In-Memory GraphX"}</span>
-            </div>
-            <div className="w-px h-5 bg-slate-800"></div>
-            <div>
-              <span className="text-slate-500 text-[10px] block">NODES / EDGES</span>
-              <span className="text-slate-200 font-bold">{dbStatus?.total_nodes || 8} Nodes • {dbStatus?.total_edges || 14} Edges</span>
-            </div>
-            <div className="w-px h-5 bg-slate-800 hidden sm:block"></div>
-            <div className="hidden sm:block">
-              <span className="text-slate-500 text-[10px] block">CACHE ACCELERATION</span>
-              <span className="text-sky-400 font-bold">{dbStatus?.cache?.hit_ratio_pct || 94.2}% Hit Rate ({dbStatus?.cache?.status || "ACTIVE"})</span>
-            </div>
-          </div>
-
-          <button
-            onClick={loadStatus}
-            title="Refresh Connection"
-            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-200 p-1 rounded hover:bg-slate-800 transition"
-          >
-            <RefreshCw size={12} />
-            <span>Refresh</span>
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="p-5 flex-1 overflow-y-auto space-y-4">
-          
-          {/* Preset Template Queries */}
-          <div>
-            <span className="text-[11px] font-mono text-slate-400 block mb-2 font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles size={13} className="text-amber-400" />
-              LAW ENFORCEMENT CYPHER TEMPLATES
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-              {PRESET_QUERIES.map((preset, idx) => (
+        {/* 4 Quick Investigation Presets (Clean Buttons) */}
+        <div className="p-4 border-b border-slate-800/80 bg-slate-950/40">
+          <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+            Quick Investigation Filters:
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {PRESET_SEARCHES.map((preset) => {
+              const isSelected = activePreset === preset.id;
+              return (
                 <button
-                  key={idx}
-                  onClick={() => handlePresetClick(preset)}
-                  className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-800/80 text-left transition group cursor-pointer"
+                  key={preset.id}
+                  onClick={() => handleSelectPreset(preset)}
+                  className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                    isSelected
+                      ? "bg-slate-800 border-amber-500/50 text-white shadow-sm"
+                      : "bg-slate-950/80 border-slate-800 text-slate-300 hover:bg-slate-850 hover:border-slate-700"
+                  }`}
                 >
-                  <div className="text-xs font-mono font-bold text-amber-300 group-hover:text-amber-200">
+                  <div className={`text-xs font-bold ${isSelected ? "text-amber-300" : "text-slate-200"}`}>
                     {preset.title}
                   </div>
                   <div className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
                     {preset.desc}
                   </div>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Interactive Cypher Editor */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Code size={13} className="text-sky-400" />
-                CYPHER QUERY EDITOR
-              </label>
-              <span className="text-[10px] font-mono text-slate-500">
-                Neo4j Bolt Protocol (Port 7687)
+        {/* Search Bar */}
+        <div className="p-4 pb-0 flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Filter results by suspect name, state, phone, or plate..."
+              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+            />
+          </div>
+          <button
+            onClick={() => handleRunQuery()}
+            disabled={isExecuting}
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-750 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <RefreshCw size={13} className={isExecuting ? "animate-spin text-amber-400" : ""} />
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        {/* Results Area */}
+        <div className="p-4 overflow-y-auto flex-1 space-y-3">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span>
+              Showing <strong className="text-white">{displayedRows.length}</strong> matching records
+            </span>
+            {queryResult?.execution_ms && (
+              <span className="text-[11px] text-slate-500">
+                Queried in {queryResult.execution_ms} ms
               </span>
-            </div>
-
-            <div className="relative">
-              <textarea
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                rows={3}
-                className="w-full p-3.5 bg-slate-950 border border-slate-700/80 rounded-xl font-mono text-xs text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition resize-none leading-relaxed selection:bg-emerald-500 selection:text-slate-950"
-                placeholder="MATCH (p:Person) RETURN p..."
-              />
-              <button
-                onClick={() => handleRunQuery()}
-                disabled={isExecuting}
-                className="absolute right-3 bottom-4 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-mono font-bold text-xs flex items-center gap-1.5 transition shadow-md cursor-pointer disabled:opacity-50"
-              >
-                {isExecuting ? <RefreshCw size={13} className="animate-spin" /> : <Play size={13} />}
-                <span>{isExecuting ? "EXECUTING..." : "RUN CYPHER"}</span>
-              </button>
-            </div>
+            )}
           </div>
 
-          {/* Query Results Section */}
-          <div className="space-y-2 pt-2 border-t border-slate-800">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider">
-                  QUERY OUTPUT
-                </span>
-                {queryResult && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                    {queryResult.row_count} Rows in <strong className="text-emerald-400">{queryResult.execution_ms} ms</strong> {queryResult.cached && "(CACHE HIT)"}
-                  </span>
-                )}
-              </div>
-
-              {/* View Format Switcher */}
-              <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-                <button
-                  onClick={() => setViewFormat("table")}
-                  className={`px-2 py-1 rounded text-[11px] font-mono flex items-center gap-1 cursor-pointer transition ${
-                    viewFormat === "table" ? "bg-slate-800 text-slate-100 font-bold" : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  <Table size={12} /> Table
-                </button>
-                <button
-                  onClick={() => setViewFormat("json")}
-                  className={`px-2 py-1 rounded text-[11px] font-mono flex items-center gap-1 cursor-pointer transition ${
-                    viewFormat === "json" ? "bg-slate-800 text-slate-100 font-bold" : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  <Code size={12} /> JSON
-                </button>
-                <button
-                  onClick={copyJson}
-                  title="Copy Results JSON"
-                  className="px-1.5 py-1 text-slate-400 hover:text-slate-200 transition cursor-pointer"
-                >
-                  {copied ? <CheckCircle2 size={12} className="text-emerald-400" /> : <Copy size={12} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Results Display Area */}
-            {queryResult ? (
-              viewFormat === "table" && queryResult.columns?.length > 0 ? (
-                <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950 max-h-60 overflow-y-auto">
-                  <table className="w-full text-left font-mono text-xs">
-                    <thead className="bg-slate-900/90 text-slate-400 text-[10px] uppercase border-b border-slate-800 sticky top-0">
-                      <tr>
-                        {queryResult.columns.map((col, idx) => (
-                          <th key={idx} className="py-2.5 px-3 font-bold text-slate-300">
-                            {col}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-850 text-slate-200">
-                      {queryResult.rows.map((row, rIdx) => (
-                        <tr key={rIdx} className="hover:bg-slate-900/50 transition">
-                          {queryResult.columns.map((col, cIdx) => (
-                            <td key={cIdx} className="py-2 px-3 text-slate-300">
-                              {typeof row[col] === "object" ? JSON.stringify(row[col]) : String(row[col] ?? "—")}
-                            </td>
-                          ))}
-                        </tr>
+          {/* Clean Results Table */}
+          {displayedRows.length > 0 ? (
+            <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-900 text-slate-400 text-[11px] uppercase font-semibold border-b border-slate-800">
+                  <tr>
+                    {queryResult?.columns?.map((col, idx) => (
+                      <th key={idx} className="py-2.5 px-3">
+                        {col.replace(/_/g, " ")}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-850 text-slate-200">
+                  {displayedRows.map((row, rIdx) => (
+                    <tr key={rIdx} className="hover:bg-slate-900/50 transition">
+                      {queryResult.columns.map((col, cIdx) => (
+                        <td key={cIdx} className="py-2.5 px-3">
+                          {typeof row[col] === "object" ? JSON.stringify(row[col]) : String(row[col] ?? "—")}
+                        </td>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl font-mono text-xs text-emerald-400 max-h-60 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap">{JSON.stringify(queryResult.rows, null, 2)}</pre>
-                </div>
-              )
-            ) : (
-              <div className="p-6 text-center text-xs font-mono text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800">
-                Execute a Cypher query to inspect criminal graph entities.
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-slate-500 text-xs bg-slate-950/50 rounded-xl border border-slate-800">
+              {isExecuting ? "Searching database..." : "No records found matching your filter."}
+            </div>
+          )}
+
+          {/* Technical Query Disclosure (Collapsed by Default) */}
+          <div className="pt-2 border-t border-slate-800/80">
+            <button
+              type="button"
+              onClick={() => setShowTechnicalQuery(!showTechnicalQuery)}
+              className="text-[11px] text-slate-500 hover:text-slate-400 flex items-center gap-1 cursor-pointer"
+            >
+              <span>{showTechnicalQuery ? "▼ Hide technical query" : "▶ Show technical database query"}</span>
+            </button>
+            {showTechnicalQuery && (
+              <div className="mt-2 p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[11px] text-emerald-400">
+                <pre className="whitespace-pre-wrap">{query}</pre>
               </div>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-[10px] font-mono text-slate-500">
-          <span>Supported: MATCH, WHERE, RETURN, LIMIT, ORDER BY, BETWEENNESS</span>
-          <span>Neo4j 5.x Community Edition & GDS Compatible</span>
+        <div className="px-5 py-3 border-t border-slate-800 bg-slate-950 flex items-center justify-between text-xs text-slate-400">
+          <span>{dbStatus?.total_nodes || 8} Suspects • {dbStatus?.total_edges || 14} Connections</span>
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition cursor-pointer"
+          >
+            Close
+          </button>
         </div>
+
       </div>
     </div>
   );

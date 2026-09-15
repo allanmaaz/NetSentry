@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { X, UploadCloud, FileText, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
-import { uploadCsvText, uploadCsvFile } from "../services/api";
+import { X, UploadCloud, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { uploadCsvText } from "../services/api";
 import { normalizeCSVToEntities, saveCustomIngestedData } from "../services/normalizer";
 import { addBlock } from "../services/blockchainLedger";
 
@@ -38,35 +38,33 @@ export default function UploadDatasetModal({ isOpen, onClose, onUploadSuccess })
 
     try {
       const res = await uploadCsvText(csvText);
-      setStatusMessage(`Successfully ingested ${res.ingested_records} records into persistent database!`);
-      addBlock("DATASET_UPLOADED", `CSV Dataset Ingested — ${res.ingested_records} Records`, { records: res.ingested_records, source: "CSV Upload", dept: "MH_POLICE" });
+      setStatusMessage(`Successfully imported ${res.ingested_records} records into the network!`);
+      addBlock("DATASET_UPLOADED", `CSV Records Uploaded — ${res.ingested_records} Records`, { records: res.ingested_records, source: "CSV Upload" });
       if (onUploadSuccess) onUploadSuccess();
       setTimeout(() => {
         onClose();
         setStatusMessage(null);
-      }, 1800);
+      }, 1500);
     } catch (err) {
-      console.warn("Backend API offline, normalizing via client Schema Adapter:", err);
       try {
         const result = normalizeCSVToEntities(csvText, "MH_POLICE");
         if (result.nodes.length > 0) {
           saveCustomIngestedData(result.nodes, result.edges);
           setIsError(false);
-          setStatusMessage(`Successfully ingested ${result.nodes.length} records into investigation graph via Schema Adapter!`);
-          addBlock("DATASET_UPLOADED", `CSV Dataset Ingested via Schema Adapter — ${result.nodes.length} Records`, { records: result.nodes.length, source: "Schema Adapter", dept: "MH_POLICE" });
+          setStatusMessage(`Successfully imported ${result.nodes.length} records into investigation network!`);
+          addBlock("DATASET_UPLOADED", `CSV Records Uploaded — ${result.nodes.length} Records`, { records: result.nodes.length });
           if (onUploadSuccess) onUploadSuccess();
           setTimeout(() => {
             onClose();
             setStatusMessage(null);
-          }, 1800);
+          }, 1500);
         } else {
           setIsError(true);
-          setStatusMessage("Failed to ingest records. Please check CSV format.");
+          setStatusMessage("Could not read records. Please verify CSV columns.");
         }
       } catch (parseErr) {
-        console.error("Client normalization error:", parseErr);
         setIsError(true);
-        setStatusMessage("Failed to ingest records. Please check CSV format.");
+        setStatusMessage("Could not read records. Please verify CSV columns.");
       }
     } finally {
       setIsUploading(false);
@@ -74,111 +72,115 @@ export default function UploadDatasetModal({ isOpen, onClose, onUploadSuccess })
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden text-slate-100 font-sans">
+        
         {/* Header */}
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <UploadCloud size={18} className="text-sky-600" />
-            <h2 className="font-bold text-xs font-mono uppercase tracking-wider text-slate-900">
-              INGEST REAL POLICE / COURT DATASET (CSV)
-            </h2>
-
+        <div className="px-5 py-4 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 flex items-center justify-center font-bold">
+              <UploadCloud size={18} />
+            </div>
+            <div>
+              <h2 className="font-bold text-sm text-white">
+                Upload Records (CSV)
+              </h2>
+              <p className="text-xs text-slate-400">
+                Import police chargesheet files and add suspects to the case network
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
-          <p className="text-xs text-slate-600">
-            Upload or paste any real law enforcement CSV dataset. NetSentry will insert records into the persistent SQLite database, run the Random Forest entity linkage engine, and recompute betweenness centrality in real-time.
-          </p>
-
-          {/* File Picker */}
-          <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative">
+        <div className="p-5 overflow-y-auto flex-1 space-y-3.5 text-xs">
+          {/* File Dropzone */}
+          <div className="border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-2xl p-4 bg-slate-950 text-center space-y-1.5 cursor-pointer relative">
             <input
               type="file"
               accept=".csv"
               onChange={handleFileUpload}
               className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
             />
-            <div className="flex flex-col items-center gap-1.5 pointer-events-none">
-              <UploadCloud size={24} className="text-slate-400" />
-              <span className="text-xs font-semibold text-slate-700">
-                Click to browse or drag & drop a .csv file
-              </span>
-              <span className="text-[10px] text-slate-400">
-                Supported columns: name, alias, phone, vehicle, police_station, state, sections
-              </span>
+            <UploadCloud size={24} className="mx-auto text-sky-400" />
+            <div className="font-semibold text-slate-200">
+              Click to browse or drop a CSV file
+            </div>
+            <div className="text-[11px] text-slate-500">
+              Columns: name, alias, phone, vehicle, police_station, state
             </div>
           </div>
 
-          {/* CSV Textarea Editor */}
+          {/* Textarea preview */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-slate-700 font-mono">
-                CSV Payload Editor
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-slate-400">
+                Or review / edit CSV rows directly:
               </label>
               <button
+                type="button"
                 onClick={() => setCsvText(SAMPLE_CSV_TEMPLATE)}
-                className="text-[11px] text-sky-600 hover:text-sky-800 font-medium transition"
+                className="text-[11px] text-sky-400 hover:text-sky-300 font-medium cursor-pointer"
               >
                 Reset to Sample
               </button>
             </div>
             <textarea
-              rows={8}
+              rows={6}
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
-              className="w-full text-xs font-mono p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition resize-none leading-relaxed text-slate-800"
-              placeholder="Paste raw CSV data here..."
+              className="w-full text-xs font-mono p-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
             />
           </div>
 
-          {/* Status Alert */}
+          {/* Status Message */}
           {statusMessage && (
             <div
-              className={`p-3 rounded-xl text-xs font-mono flex items-center gap-2 ${
-                isError ? "bg-red-50 text-red-700 border border-red-200" : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              className={`p-3 rounded-xl flex items-center gap-2 ${
+                isError
+                  ? "bg-red-500/10 text-red-300 border border-red-500/30"
+                  : "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
               }`}
             >
               {isError ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
-              {statusMessage}
+              <span className="font-semibold">{statusMessage}</span>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
+        <div className="px-5 py-3 border-t border-slate-800 bg-slate-950 flex items-center justify-between text-xs text-slate-400">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition"
+            className="px-3.5 py-1.5 text-slate-400 hover:text-white transition cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleIngest}
             disabled={isUploading || !csvText.trim()}
-            className="flex items-center gap-2 px-5 py-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-sm transition disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shadow-md"
           >
             {isUploading ? (
               <>
-                <RefreshCw size={14} className="animate-spin" />
-                Ingesting into Database...
+                <RefreshCw size={13} className="animate-spin" />
+                <span>Importing Records...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 size={14} />
-                Ingest Dataset & Rebuild Graph
+                <CheckCircle2 size={13} />
+                <span>Import to Case Network</span>
               </>
             )}
           </button>
         </div>
+
       </div>
     </div>
   );
