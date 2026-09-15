@@ -210,7 +210,7 @@ export default function AuthModal({ isOpen, onClose, currentOfficer, onSelectOff
             )}
 
             <form onSubmit={handleManualLogin} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-mono text-slate-400 mb-1">
                     OFFICER BADGE ID

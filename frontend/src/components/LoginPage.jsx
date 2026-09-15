@@ -150,7 +150,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
       {/* Main Authentication Card */}
       <main className="relative z-10 flex-1 flex items-center justify-center p-6 my-auto">
-        <div className="w-full max-w-4xl bg-slate-900/80 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl space-y-6">
+        <div className="w-full max-w-4xl bg-slate-900/80 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6">
           
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-mono text-slate-300">

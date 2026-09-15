@@ -63,7 +63,7 @@ export default function ModelMetricsModal({ isOpen, onClose }) {
           </div>
 
           {/* Core Metrics Grid */}
-          <div className="grid grid-cols-4 gap-3 text-center font-mono text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono text-xs">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
               <span className="text-slate-400 text-[10px] block">ACCURACY</span>
               <span className="text-lg font-bold text-slate-900">{metrics.accuracy}%</span>
@@ -114,7 +114,7 @@ export default function ModelMetricsModal({ isOpen, onClose }) {
             <h4 className="text-xs font-bold font-mono text-slate-700 uppercase">
               Evaluation Confusion Matrix (Out-of-Sample Test Set)
             </h4>
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono text-center">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2 text-xs font-mono text-center">
               <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200">
                 <span className="block font-extrabold text-sm">623</span>
                 <span className="text-[10px]">TRUE POSITIVE (Accurate Merges)</span>

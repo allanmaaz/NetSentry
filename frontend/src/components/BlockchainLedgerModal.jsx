@@ -292,7 +292,7 @@ export default function BlockchainLedgerModal({ isOpen, onClose }) {
         </div>
 
         {/* ── Block Chain Quick Stats ───────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-0 border-b border-slate-800 shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-slate-800 shrink-0">
           {[
             { label: "TOTAL BLOCKS", value: totalBlocks, color: "text-amber-400" },
             { label: "ACTIONS LOGGED", value: totalBlocks - 1, color: "text-sky-400" },

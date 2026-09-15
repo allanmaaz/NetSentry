@@ -50,7 +50,7 @@ export default function TacticalSimModal({
           </div>
 
           {/* Impact Stats Grid */}
-          <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3 text-xs font-mono">
             <div className="p-3 bg-red-50/50 border border-red-200 rounded-xl">
               <div className="flex items-center gap-1 text-red-600 mb-1">
                 <AlertOctagon size={13} />

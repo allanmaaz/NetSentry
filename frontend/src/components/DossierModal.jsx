@@ -17,19 +17,19 @@ export default function DossierModal({ entity, isOpen, onClose }) {
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
         {/* Modal Top Bar */}
-        <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield size={18} className="text-slate-800" />
-            <span className="font-bold text-xs font-mono uppercase tracking-wider text-slate-800">
+        <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Shield size={18} className="text-slate-800 shrink-0" />
+            <span className="font-bold text-xs font-mono uppercase tracking-wider text-slate-800 truncate">
               LEGAL INTELLIGENCE DOSSIER — SECTION 65B INDIAN EVIDENCE ACT
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => window.print()}
               className="p-1.5 rounded-lg border border-slate-300 hover:bg-slate-200 text-slate-700 transition text-xs flex items-center gap-1"
             >
-              <Printer size={14} /> Print
+              <Printer size={14} /> <span className="hidden min-[420px]:inline">Print</span>
             </button>
             <button
               onClick={onClose}
@@ -41,7 +41,7 @@ export default function DossierModal({ entity, isOpen, onClose }) {
         </div>
 
         {/* Printable Dossier Body */}
-        <div className="p-8 overflow-y-auto space-y-6 text-slate-800 font-sans">
+        <div className="p-4 sm:p-8 overflow-y-auto space-y-6 text-slate-800 font-sans">
           {/* Official Letterhead */}
           <div className="border-b-2 border-slate-900 pb-4 text-center space-y-1">
             <h2 className="text-lg font-extrabold tracking-wide uppercase font-mono">
@@ -59,7 +59,7 @@ export default function DossierModal({ entity, isOpen, onClose }) {
           </div>
 
           {/* Subject Overview */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono">
             <div>
               <span className="text-slate-400 block">CANONICAL IDENTITY:</span>
               <span className="font-bold text-sm text-slate-900">{entity.canonical_name}</span>
@@ -116,7 +116,8 @@ export default function DossierModal({ entity, isOpen, onClose }) {
               <h4 className="text-xs font-bold text-slate-900 font-mono uppercase">
                 CROSS-BORDER CASE RECORDS REGISTERED ({entity.firs.length}):
               </h4>
-              <table className="w-full text-left border-collapse text-xs">
+              <div className="overflow-x-auto -mx-1 px-1">
+              <table className="w-full text-left border-collapse text-xs min-w-[480px]">
                 <thead>
                   <tr className="border-b border-slate-300 font-mono text-[11px] text-slate-500">
                     <th className="py-2">FIR / CRIME NO</th>
@@ -136,6 +137,7 @@ export default function DossierModal({ entity, isOpen, onClose }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>
